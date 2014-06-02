@@ -1,655 +1,632 @@
+/*
+ * File      : i2c.c
+ * This file is part of RT-Thread RTOS
+ * COPYRIGHT (C) 2006, RT-Thread Development Team
+ *
+ * The license and distribution terms for this file may be
+ * found in the file LICENSE in this distribution or at
+ * http://www.rt-thread.org/license/LICENSE
+ *
+ * Change Logs:
+ * Date           Author       Notes
+ * 2011-09-21     JoyChen      First version, support I2C1
+ */
+
 #include <rtthread.h>
-#include <board.h>
-#include <rtdevice.h>
+#include "drv_i2c.h"
+#include "stm32f2xx_rcc.h"
+#include "stm32f2xx_i2c.h"
+#include "stm32f2xx_dma.h"
 
-#ifdef RT_USING_I2C_BITOPS
+#define EV_SB		1
+#define EV_ADDR		(1<<1)
+#define EV_STOPF	(1<<2)
+#define EV_BTF		(1<<3)
+#define ERR_ARLO	(1<<4)
+#define ERR_AF		(1<<5)
+#define ERR_OVR		(1<<6)
+#define ERR_PECERR	(1<<7)
+#define ERR_BERR	(1<<8)
+#define I2C_COMPLETE (1<<9)
 
-/* GPIO define
-SCL: I2C1_SCL PB6
-SDA: I2C1_SDA PB7
+#define I2C_BUSY  1
+#define I2C_FREE  2
+
+#define I2C_WRITE 0
+#define I2C_READ_DMA 1
+#define I2C_READ_POLLING 2
+#define I2C_READ_INTERRUPT 3
+
+#define I2C_TRACE(...)
+
+enum i2c_state {S1=0, S2, S2_1, S2_2, S3, S4, S5, S6, S_STOP};
+
+
+
+extern void rt_hw_led_on(rt_uint32_t n);
+extern void rt_hw_led_off(rt_uint32_t n);
+
+DMA_InitTypeDef  I2CDMA_InitStructure;
+uint32_t I2CDirection = I2C_DIRECTION_TX;
+uint32_t i2cErrorNo = 0;
+
+struct rt_event i2c_event;
+static rt_mutex_t i2c_mux;
+
+__IO uint8_t DevAddr;
+static uint8_t* i2c_buf, *MemAddr, i2cStatus, i2cFlag, i2cPhase, memtype, i2c1_init_flag = 0;
+static uint32_t BufSize;
+
+I2C_ProgrammingModel I2CMode = DMA;
+
+
+Status I2C_Free_Bus(I2C_TypeDef* I2Cx, u32 timeout );
+void I2C_DMAConfig(I2C_TypeDef* I2Cx, uint8_t* pBuffer, uint32_t BufferSize, uint32_t Direction);
+
+void dump_i2c_register(I2C_TypeDef* I2Cx)
+{
+    if(I2Cx == I2C1 )
+        I2C_TRACE("======I2C1======\n");
+    else
+        I2C_TRACE("======I2C2======\n");
+    I2C_TRACE("CR1: 0x%x\tCR2: 0x%x\n", I2Cx->CR1, I2Cx->CR2);
+	I2C_TRACE("SR1: 0x%x\tSR2: 0x%x\n", I2Cx->SR1, I2Cx->SR2);
+
+}
+
+/*TODO: If your device need more time to initialize I2C bus or waiting memory write, you can use I2C_AcknowledgePolling avoid I2C bus lose.*/
+Status I2C_AcknowledgePolling(I2C_TypeDef* I2Cx ,uint8_t Addr)
+{
+    uint32_t timeout = 0xFFFF, ret;
+    uint16_t tmp;
+	ret = rt_mutex_take(i2c_mux, RT_WAITING_FOREVER );
+	
+	if( ret == RT_EOK )
+	{
+	    do{
+	        if( timeout-- <= 0 )
+	        {
+	            I2C_ClearFlag(I2Cx,I2C_FLAG_AF);
+	            I2Cx->CR1 |= CR1_STOP_Set;
+				rt_mutex_release(i2c_mux);
+	            return Error;
+	        }
+	
+	        I2Cx->CR1 |= CR1_START_Set;
+	        tmp = I2Cx->SR1;
+	        I2Cx->DR = Addr;
+	        
+	    }while((I2Cx->SR1&0x0002) != 0x0002);
+	  
+	    I2C_ClearFlag(I2Cx,I2C_FLAG_AF);
+	    I2Cx->CR1 |= CR1_STOP_Set;
+	    while ((I2Cx->CR1&0x200) == 0x200);
+		rt_kprintf( "AcknowledgePolling OK\n");
+		rt_mutex_release(i2c_mux);
+		return Success; 
+	}
+	else
+		return Error;
+} 
+
+/* 
+	Only 1 byte READ using Interrupt or Polling otherwise using DMA
 */
-#define GPIO_PORT_I2C_SCL   GPIOB
-#define RCC_I2C_SCL         RCC_AHB1Periph_GPIOB
-#define PIN_I2C_SCL		    GPIO_Pin_6
-
-#define GPIO_PORT_I2C_SDA   GPIOB
-#define RCC_I2C_SDA         RCC_AHB1Periph_GPIOB
-#define PIN_I2C_SDA		    GPIO_Pin_7
-
-static struct rt_i2c_bus_device i2c_device;
-
-
-static rt_err_t stm32_i2c_configure(struct rt_i2c_bus_device * device,
-                                    struct rt_i2c_configuration* configuration)
+void I2C1_EV_IRQHandler()
 {
-    return RT_EOK;
+	__IO uint16_t regSR1, regSR2;
+	__IO uint32_t regSR;
+	int i=10;
+
+	rt_interrupt_enter();
+	//rt_hw_led_on(10);
+	regSR1 = I2C1->SR1;
+	regSR2 = I2C1->SR2;
+	regSR =  (regSR2 << 16) | regSR1;
+	//rt_kprintf("EV=> SR1: 0x%x\tSR2: 0x%x\tSR: 0x%x status: %d\n", regSR1, regSR2, regSR, i2cStatus);
+ 
+	if( (regSR & I2C_EVENT_MASTER_MODE_SELECT) == I2C_EVENT_MASTER_MODE_SELECT)	//EV5
+	{
+
+		if( i2cStatus == S1 ) //Send TX Command
+		{
+			I2C1->DR = DevAddr & 0xFE;
+			i2cStatus = S2;
+		}
+		else if( i2cStatus == S4 ) //Send RX Command
+		{
+			I2C1->DR = DevAddr | 0x01;
+			i2cStatus = S5;
+		}
+
+
+		regSR1 = 0;
+		regSR2 = 0;
+
+	}
+	if( (regSR & I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)== I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED )			//EV6
+	{
+		switch( i2cStatus )
+		{
+			case S2: //Send 1st memory address phase
+			{
+				//I2C_DMACmd(I2C1, ENABLE);
+				I2C1->DR = MemAddr[0];
+				if( memtype == I2C_MEM_1Byte ) 
+					i2cStatus = S2_2;
+				else if( memtype == I2C_MEM_2Bytes )
+					i2cStatus = S2_1;
+			}
+			break;
+			case S5: //Set RX buffer phase
+			{
+				if( i2cFlag == I2C_READ_DMA )
+				{
+					I2C_DMAConfig(I2C1, i2c_buf, BufSize, I2C_DIRECTION_RX);
+					I2C1->CR2 |= CR2_LAST_Set | CR2_DMAEN_Set;
+					DMA_ITConfig( I2C1_DMA_CHANNEL_RX, DMA_IT_TC, ENABLE);
+				}
+				else if( i2cFlag == I2C_READ_INTERRUPT )
+				{ 
+					I2C1->CR2 |= I2C_IT_BUF;
+					I2C1->CR1 &= CR1_ACK_Reset;
+	                /* Program the STOP */
+	                I2C1->CR1 |= CR1_STOP_Set;
+				}
+				i2cStatus = S6;
+			}
+			break;
+		}
+		
+		regSR1 = 0;
+		regSR2 = 0;
+		//dump_i2c_register(I2C1);
+	}
+	if((regSR & I2C_EVENT_MASTER_BYTE_RECEIVED) == I2C_EVENT_MASTER_BYTE_RECEIVED) //EV7
+	{
+		//Interrupt RX complete phase
+		if( i2cStatus == S6	&& i2cFlag == I2C_READ_INTERRUPT )
+		{
+			*i2c_buf = I2C1->DR;
+			i2cStatus = S_STOP;
+			rt_event_send(&i2c_event, I2C_COMPLETE);
+		}
+	} 
+	if( (regSR & I2C_EVENT_MASTER_BYTE_TRANSMITTED) == I2C_EVENT_MASTER_BYTE_TRANSMITTED ) //EV8_2
+	{
+		//Start TX/RX phase
+		if(i2cStatus == S3)
+		{
+			DMA_ClearFlag(I2C1_DMA_CHANNEL_TX, DMA_FLAG_TCIF6 );
+			DMA_Cmd(I2C1_DMA_CHANNEL_TX, DISABLE);
+			switch (i2cFlag)
+			{
+				case I2C_WRITE:
+					i2cStatus = S_STOP;
+					I2C1->CR1 |= CR1_STOP_Set;
+					rt_event_send(&i2c_event, I2C_COMPLETE);					
+				break;
+
+				case I2C_READ_DMA:
+					i2cStatus = S4;
+					I2C1->CR1 |= CR1_START_Set;
+				break;
+
+				case I2C_READ_POLLING:
+					i2cStatus = S_STOP;
+					rt_event_send(&i2c_event, I2C_COMPLETE);
+					I2C1->CR2 &= ~(CR2_LAST_Set | I2C_IT_EVT | CR2_DMAEN_Set);
+					I2C1->CR1 |= CR1_START_Set;
+				break;
+
+				case I2C_READ_INTERRUPT:
+					i2cStatus = S4;
+					I2C1->CR1 |= CR1_START_Set;
+				break;
+			}
+		}
+		if( i2cStatus == S2_1 ) //Send 2nd memory address
+		{
+			if( memtype == I2C_MEM_2Bytes ) //memory address has 2 bytes
+			{
+				I2C1->DR = MemAddr[1];
+				i2cStatus = S2_2;
+			}
+			if( i2cFlag == I2C_READ_POLLING || i2cFlag == I2C_READ_DMA || i2cFlag == I2C_READ_INTERRUPT)
+			{
+				i2cStatus = S3;
+			}
+		}
+		if( i2cStatus == S2_2 ) //Set TX DAM phase
+		{
+			I2C_DMAConfig(I2C1, i2c_buf, BufSize, I2C_DIRECTION_TX);
+			I2C1->CR2 |= CR2_DMAEN_Set;
+			i2cStatus = S3;
+		}			   
+	} 
+
+	rt_interrupt_leave();
+
 }
 
-
-
-static rt_size_t stm32_i2c_read(struct rt_i2c_bus_device * device,
-                                struct rt_i2c_message * message,
-                                rt_uint8_t * read_buffer,
-                                rt_size_t size)
+void DMA1_Stream6_IRQHandler(void) //I2C1 TX
 {
-    uint16_t temp;
-
-    /* Send START condition */
-    I2C_GenerateSTART(I2C1, ENABLE);
-
-    /* Test on EV5 and clear it */
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT));
-
-    /* Send EEPROM address for write */
-    I2C_Send7bitAddress(I2C1, message->device_addr, I2C_Direction_Transmitter);
-
-    /* Test on EV6 and clear it */
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED));
-
-    I2C_SendData(I2C1, *message->device_offset);
-
-    /* Test on EV8 and clear it */
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
-
-    /* Send STRAT condition a second time */
-    I2C_GenerateSTART(I2C1, ENABLE);
-
-    /* Test on EV5 and clear it */
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT));
-
-    /* Send EEPROM address for read */
-    I2C_Send7bitAddress(I2C1, message->device_addr, I2C_Direction_Receiver);
-
-    /* Test on EV6 and clear it */
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED));
-
-
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED));
-
-    I2C_AcknowledgeConfig(I2C1,DISABLE);
-
-    *read_buffer++ = I2C_ReceiveData(I2C1);
-
-    /* Test on EV7 and clear it */
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED));
-
-    *read_buffer++ |= I2C_ReceiveData(I2C1);
-
-    /* Send STOP Condition */
-    I2C_GenerateSTOP(I2C1, ENABLE);
-
-    I2C_AcknowledgeConfig(I2C1,ENABLE);
-
-    return size;
-}
-
-static rt_size_t stm32_i2c_write(struct rt_i2c_bus_device * device,
-                                 struct rt_i2c_message * message,
-                                 const rt_uint8_t * write_buffer,
-                                 rt_size_t size)
-{
-    /* Send START condition */
-    I2C_GenerateSTART(I2C1, ENABLE);
-
-    /* Test on EV5 and clear it */
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT));
-
-    /* Send EEPROM address for write */
-    I2C_Send7bitAddress(I2C1, message->device_addr, I2C_Direction_Transmitter);
-
-    /* Test on EV6 and clear it */
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED));
-
-    /* Send the EEPROM's internal address to write to */
-    I2C_SendData(I2C1, message->device_offset);
-
-    /* Test on EV8 and clear it */
-    while(! I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
-
-    /* Send the current byte */
-    I2C_SendData(I2C1, (uint8_t)*write_buffer++);
-
-    /* Test on EV8 and clear it */
-    while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
-
-    /* Send the current byte */
-    I2C_SendData(I2C1, (uint8_t)*write_buffer++);
-
-    /* Test on EV8 and clear it */
-    while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
-
-    /* Send STOP condition */
-    I2C_GenerateSTOP(I2C1, ENABLE);
-
-    return 0;
-}
-
-static rt_size_t stm32_i2c_recv_bytes(I2C_TypeDef* I2Cx, struct rt_i2c_msg *msg)
-{
-    rt_size_t bytes = 0;
-    rt_size_t len = msg->len;
-
-    while (len--)
+	rt_interrupt_enter();
+	if (DMA_GetITStatus(I2C1_DMA_CHANNEL_TX, DMA_IT_TCIF6))
     {
-        while(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_RECEIVED));
-
-        msg->buf[bytes++] = (rt_uint8_t)I2Cx->DR;
+		I2C_TRACE("TXTC\n");
+		DMA_ClearFlag(I2C1_DMA_CHANNEL_TX, DMA_FLAG_TCIF6 );
+		
     }
-
-    return bytes;
+	rt_interrupt_leave();	
 }
 
-
-static rt_size_t stm32_i2c_send_bytes(I2C_TypeDef* I2Cx, struct rt_i2c_msg *msg)
+void DMA1_Stream0_IRQHandler(void) //I2C1 RX
 {
-    rt_size_t bytes = 0;
-    rt_size_t len = msg->len;
 
-    while (len--)
+	rt_interrupt_enter();
+
+	if (DMA_GetITStatus(I2C1_DMA_CHANNEL_RX, DMA_IT_TCIF0))
     {
-        I2Cx->DR = msg->buf[bytes++];
-        while(! I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
+	   I2C_TRACE("RXTC\n");
+	   /* clear DMA flag */
+		DMA_ClearFlag(I2C1_DMA_CHANNEL_RX, DMA_FLAG_TCIF0 );
+		DMA_ITConfig( I2C1_DMA_CHANNEL_RX, DMA_IT_TC, DISABLE);
+		DMA_Cmd(I2C1_DMA_CHANNEL_RX, DISABLE);
+		if( i2cStatus == S6 )
+		{
+			i2cStatus = S_STOP;
+			I2C1->CR1 |= CR1_STOP_Set;
+			rt_event_send(&i2c_event, I2C_COMPLETE);
+		}
     }
+	if (DMA_GetITStatus(I2C1_DMA_CHANNEL_RX, DMA_IT_HTIF0))
+	{
+		I2C_TRACE("RXHT\n");
+		DMA_ClearFlag(I2C1_DMA_CHANNEL_RX, DMA_FLAG_HTIF0 );
+	}
+	if (DMA_GetITStatus(I2C1_DMA_CHANNEL_RX, DMA_IT_TEIF0))
+	{
+		I2C_TRACE("RXTE\n");
+		DMA_ClearFlag(I2C1_DMA_CHANNEL_RX, DMA_FLAG_TEIF0 );
+	}
+	if (DMA_GetITStatus(I2C1_DMA_CHANNEL_RX, DMA_IT_FEIF0))
+	{
+		I2C_TRACE("RXFE\n");
+		DMA_ClearFlag(I2C1_DMA_CHANNEL_RX, DMA_FLAG_FEIF0 );
+	}
+	if (DMA_GetITStatus(I2C1_DMA_CHANNEL_RX, DMA_IT_DMEIF0))
+	{
+		I2C_TRACE("RXDME\n");
+		DMA_ClearFlag(I2C1_DMA_CHANNEL_RX, DMA_FLAG_DMEIF0 );
+	}
 
-    return bytes;
+	rt_interrupt_leave();	
+}
+
+void I2C1_ER_IRQHandler()
+{
+	__IO uint16_t regSR1, regSR2;
+	
+	i2cErrorNo = 0;
+	regSR1 = I2C1->SR1;
+	I2C_TRACE("I2C Error SR1= 0x%X CR1 = 0x%X\n" , regSR1, I2C1->CR1);
+	if( (regSR1 &  SR1_AF_Set) ==  SR1_AF_Set)
+	{
+		I2C1->SR1 &= ~SR1_AF_Set;
+		i2cErrorNo |= ERR_AF;
+		I2C_TRACE("ACK failure\n");
+	}
+	if( (regSR1 & SR1_BERR_Set) ==  SR1_BERR_Set)
+	{
+		I2C1->SR1 &= ~SR1_BERR_Set;
+		i2cErrorNo |= ERR_BERR;
+		I2C_TRACE("Bus Error\n");
+	}
+	if( (regSR1 & SR1_ARLO_Set) ==  SR1_ARLO_Set)
+	{
+		I2C1->SR1 &= ~SR1_ARLO_Set;
+		i2cErrorNo |= ERR_ARLO;
+		I2C_TRACE("Arblitation lost\n");
+	}
+	//dump_i2c_register(I2C1);
+
+}
+Status I2C_Free_Bus(I2C_TypeDef* I2Cx, u32 timeout )
+{
+	/*u32 i = 0;
+	u16 tmp = 0;
+	GPIO_InitTypeDef  GPIO_InitStructure;
+
+	tmp = I2Cx->SR2;
+
+	while( tmp & SR2_BUSY )
+	{
+		if( i++ < timeout )
+		{
+			if( I2Cx == I2C1 )
+			{
+				//rt_kprintf("Free Bus!\n");
+				GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+		        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+		        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+		        GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+				GPIO_SetBits(GPIOB, GPIO_Pin_6);
+				GPIO_SetBits(GPIOB, GPIO_Pin_7);
+				
+			}
+			else if( I2Cx == I2C2 )
+			{
+				GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11;
+		        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+		        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+		        GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+				GPIO_ResetBits(GPIOB, GPIO_Pin_10);
+			}
+			rt_thread_delay(10);
+			GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+		    GPIO_Init(GPIOB, &GPIO_InitStructure);
+			I2C_Cmd(I2Cx, DISABLE);
+        	I2C_Cmd(I2Cx, ENABLE);
+		}
+		else
+			return Error;
+		tmp = I2Cx->SR2;
+	}	*/
+	return Success;
+
+}
+
+/*
+	I2Cx: I2C1 or I2C2 (Now it only support I2C1)
+	pBuffer: Buffer point
+	NumByteToRW: Number of bytes read/write
+    memAddr: 1-2 bytes memory address
+	SlaveAddress: device address
+	MemType: 1 = memory address size 1 bytes, 2 = memory address size 2 bytes	
+*/
+Status I2C_IORW(I2C_TypeDef* I2Cx, uint8_t* pBuffer, uint32_t NumByteToRW, uint16_t memAddr, uint8_t SlaveAddress, uint8_t MemType )
+{
+	uint32_t ev, Timeout=0xFFFF;
+    uint16_t temp, temp2;
+	static uint32_t call_cnt = 0, i;
+	Status ret;
+
+	ret = rt_mutex_take(i2c_mux, RT_WAITING_FOREVER );
+	if( ret == RT_EOK )
+	{
+		ret = Success;
+		DevAddr = SlaveAddress;
+		BufSize = NumByteToRW;
+		i2c_buf = pBuffer;
+		memtype = MemType;
+
+		MemAddr = (uint8_t*)&memAddr;
+		I2CDirection = I2C_DIRECTION_TX;
+	
+		I2CMode = DMA;
+	
+		i2cStatus = S1;
+		if( SlaveAddress  & 0x01 )
+		{
+			if( BufSize == 1 )
+				i2cFlag = I2C_READ_INTERRUPT; //I2C_READ_POLLING; 
+			else
+				i2cFlag = I2C_READ_DMA;
+		}
+		else 
+			i2cFlag = I2C_WRITE;
+		I2Cx->CR2 |= I2C_IT_ERR | I2C_IT_EVT;// | CR2_DMAEN_Set;
+			
+		I2Cx->CR1 |= CR1_START_Set;
+
+		Timeout = 0xFFFF;
+		if( rt_event_recv( &i2c_event, I2C_COMPLETE, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, &ev ) != RT_EOK ) {ret = Error; goto i2cError;}
+	
+		if( i2cFlag == I2C_READ_POLLING )
+		{
+			while ((I2Cx->SR1&0x0001) != 0x0001)
+			if (Timeout-- == 0)	{ret = Error; goto i2cError;}
+			Timeout = 0xFFFF;
+	        I2Cx->DR = DevAddr;
+	        /* Wait until ADDR is set: EV6 */
+	        while ((I2Cx->SR1&0x0002) != 0x0002)
+	        {
+	            if (Timeout-- == 0){ret = Error; goto i2cError;}
+	        }
+			/* Clear ACK bit */
+	        I2Cx->CR1 &= CR1_ACK_Reset;
+	        /* Disable all active IRQs around ADDR clearing and STOP programming because the EV6_3
+	        software sequence must complete before the current byte end of transfer */
+	        __disable_irq();
+	        /* Clear ADDR flag */
+	        temp = I2Cx->SR2;
+	        /* Program the STOP */
+	        I2Cx->CR1 |= CR1_STOP_Set;
+	        /* Re-enable IRQs */
+	        __enable_irq();
+	        /* Wait until a data is received in DR register (RXNE = 1) EV7 */
+	        while ((I2Cx->SR1 & 0x00040) != 0x000040)if (Timeout-- == 0){ret = Error; goto i2cError;}
+	        /* Read the data */
+	        *i2c_buf = I2Cx->DR;
+	        /* Make sure that the STOP bit is cleared by Hardware before CR1 write access */
+	        while ((I2Cx->CR1&0x200) == 0x200)if (Timeout-- == 0){ret = Error; goto i2cError;}
+	        /* Enable Acknowledgement to be ready for another reception */
+	        I2Cx->CR1 |= CR1_ACK_Set;
+		}
+		else
+		{
+			while ((I2Cx->CR1&0x200) == 0x200)
+			{
+				if (Timeout-- == 0) {ret = Error; break;}
+			}
+			if( i2cFlag == I2C_READ_INTERRUPT )
+				I2Cx->CR1 |= CR1_ACK_Set; 
+		}
+	i2cError:
+		if( ret == Error )
+		{
+			/* TODO: i2c error handler */
+			/* Need check i2cErrorNo and Reset I2C bus */
+		}
+		I2Cx->CR2 &= ~CR2_FREQ_Reset;
+		//dump_i2c_register(I2C1);
+		rt_mutex_release(i2c_mux);
+		return ret;
+	}
+	else
+		return Error;
+
 }
 
 
-static void I2C_SendAddress(I2C_TypeDef* I2Cx, struct rt_i2c_msg *msg)
+void I2C1_INIT()
 {
-    rt_uint16_t addr;
-    rt_uint16_t flags = msg->flags;
-    /* Check the parameters */
-    assert_param(IS_I2C_ALL_PERIPH(I2Cx));
-    /* Test on the direction to set/reset the read/write bit */
-    addr = msg->addr << 1;
-    if (flags & RT_I2C_RD)
-    {
-        /* Set the address bit0 for read */
-        addr |= 1;
-    }
-    /* Send the address */
-    I2Cx->DR = addr;
+	GPIO_InitTypeDef  GPIO_InitStructure;
+    I2C_InitTypeDef  I2C_InitStructure;
+	NVIC_InitTypeDef  NVIC_InitStructure;
+
+	if( i2c1_init_flag == 0 )
+	{
+		/* Enable the I2C clock */
+		RCC_APB1PeriphClockCmd(I2C1_CLK, ENABLE);
+		/* GPIOB clock enable */
+	    RCC_AHB1PeriphClockCmd(I2C1_GPIO_CLK, ENABLE);
+		/* Enable the DMA1 clock */
+	    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
+	
+		//Reset GPIO
+		GPIO_InitStructure.GPIO_Pin =  I2C1_SDA_PIN | I2C1_SCL_PIN;
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+		GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+		GPIO_Init(I2C1_GPIO_PORT, &GPIO_InitStructure);
+	
+		/* Connect PXx to I2C_SCL*/
+	 	GPIO_PinAFConfig(I2C1_GPIO_PORT, I2C1_SDA_SOURCE, GPIO_AF_I2C1);
+	
+	    /* Connect PXx to I2C_SDA*/
+	  	GPIO_PinAFConfig(I2C1_GPIO_PORT, I2C1_SCL_SOURCE, GPIO_AF_I2C1); 		
+	
+	    /* Enable I2C1 reset state */
+	    RCC_APB1PeriphResetCmd(I2C1_CLK, ENABLE);
+	    /* Release I2C1 from reset state */
+	    RCC_APB1PeriphResetCmd(I2C1_CLK, DISABLE);
+	
+		I2C_DeInit(I2C1);
+		I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
+	    I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
+	    I2C_InitStructure.I2C_OwnAddress1 = OwnAddress1;
+	    I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
+	    I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+	    I2C_InitStructure.I2C_ClockSpeed = ClockSpeed;
+	    I2C_Init(I2C1, &I2C_InitStructure);	 
+	
+		I2C_Cmd(I2C1, ENABLE);
+	
+		/* Configure and enable I2C1 event interrupt -------------------------------*/
+		NVIC_InitStructure.NVIC_IRQChannel = I2C1_EV_IRQn;
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+		NVIC_Init(&NVIC_InitStructure);
+		
+		/* Configure and enable I2C1 DMA interrupt -------------------------------*/  
+		NVIC_InitStructure.NVIC_IRQChannel = I2C1_DMA_TX_IRQn;
+		NVIC_Init(&NVIC_InitStructure);
+	
+		NVIC_InitStructure.NVIC_IRQChannel = I2C1_DMA_RX_IRQn;
+		NVIC_Init(&NVIC_InitStructure);
+	
+		/* Configure and enable I2C1 error interrupt -------------------------------*/  
+		NVIC_InitStructure.NVIC_IRQChannel = I2C1_ER_IRQn;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
+		NVIC_Init(&NVIC_InitStructure);
+	
+		/* I2C1 TX DMA Channel configuration */
+		DMA_Cmd(I2C1_DMA_CHANNEL_TX, DISABLE);
+	    DMA_DeInit(I2C1_DMA_CHANNEL_TX);
+		I2CDMA_InitStructure.DMA_Channel = DMA_Channel_1;
+	    I2CDMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)I2C1_DR_Address;
+	    I2CDMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)0;   /* This parameter will be configured durig communication */
+	    I2CDMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;    /* This parameter will be configured durig communication */
+	    I2CDMA_InitStructure.DMA_BufferSize = 0xFFFF;            /* This parameter will be configured durig communication */
+	    I2CDMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	    I2CDMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	    I2CDMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;	
+	    I2CDMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	    I2CDMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+	    I2CDMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
+	    //I2CDMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
+		I2CDMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
+		I2CDMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;
+		I2CDMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+		I2CDMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+	    DMA_Init(I2C1_DMA_CHANNEL_TX, &I2CDMA_InitStructure);
+	
+	    /* I2C1 RX DMA Channel configuration */
+		DMA_Cmd(I2C1_DMA_CHANNEL_RX, DISABLE);
+	    DMA_DeInit(I2C1_DMA_CHANNEL_RX);
+	    DMA_Init(I2C1_DMA_CHANNEL_RX, &I2CDMA_InitStructure); 
+		
+		//I2C_AcknowledgePolling(I2C1, 0x70);
+	
+		rt_event_init(&i2c_event, "i2c_event", RT_IPC_FLAG_FIFO );
+		i2c_mux = rt_mutex_create("i2c_mux", RT_IPC_FLAG_FIFO );
+		i2c1_init_flag = 1;
+	}
 }
 
-
-static rt_size_t stm32_i2c_xfer(struct rt_i2c_bus_device *bus,
-                                struct rt_i2c_msg msgs[], rt_uint32_t num)
+void I2C_DMAConfig(I2C_TypeDef* I2Cx, uint8_t* pBuffer, uint32_t BufferSize, uint32_t Direction)
 {
-    struct rt_i2c_msg *msg;
-    rt_int32_t i, ret;
-    rt_uint16_t ignore_nack;
-
-    I2C_GenerateSTART(I2C1, ENABLE);
-    /* Test on EV5 and clear it */
-    while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT));
-
-    for (i = 0; i < num; i++)
+    
+	I2CDMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)pBuffer;
+	I2CDMA_InitStructure.DMA_BufferSize = (uint32_t)BufferSize;
+	/* Initialize the DMA with the new parameters */
+    if (Direction == I2C_DIRECTION_TX)
     {
-        msg = &msgs[i];
-        ignore_nack = msg->flags & RT_I2C_IGNORE_NACK;
-        if (!(msg->flags & RT_I2C_NO_START))
-        {
-            if (i)
-            {
-                I2C_GenerateSTART(I2C1, ENABLE);
-            }
-            I2C_SendAddress(I2C1, msg);
-            if (msg->flags & RT_I2C_RD)
-                while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED));
-            else
-                while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED));
+        /* Configure the DMA Tx Channel with the buffer address and the buffer size */
+        I2CDMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
 
-        }
-        if (msg->flags & RT_I2C_RD)
-        {
-            if (!(msg->flags & RT_I2C_NO_READ_ACK))
-                I2C_AcknowledgeConfig(I2C1,ENABLE);
-            else
-                I2C_AcknowledgeConfig(I2C1,DISABLE);
-            ret = stm32_i2c_recv_bytes(I2C1, msg);
-            if (ret >= 1)
-                i2c_dbg("read %d byte%s\n",
-                        ret, ret == 1 ? "" : "s");
-            if (ret < msg->len)
-            {
-                if (ret >= 0)
-                    ret = -RT_EIO;
-                goto out;
-            }
-        }
+        if (I2Cx == I2C1)
+		{
+            I2CDMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)I2C1_DR_Address;
+			//DMA_Cmd(I2C1_DMA_CHANNEL_TX, DISABLE);
+	        DMA_Init(I2C1_DMA_CHANNEL_TX, &I2CDMA_InitStructure);
+	        DMA_Cmd(I2C1_DMA_CHANNEL_TX, ENABLE);
+		}
         else
-        {
-            ret = stm32_i2c_send_bytes(I2C1, msg);
-            if (ret >= 1)
-                i2c_dbg("write %d byte%s\n",
-                        ret, ret == 1 ? "" : "s");
-            if (ret < msg->len)
-            {
-                if (ret >= 0)
-                    ret = -RT_ERROR;
-                goto out;
-            }
-        }
+		{
+            I2CDMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)I2C2_DR_Address;
+			//DMA_Cmd(I2C2_DMA_CHANNEL_TX, DISABLE);
+        	DMA_Init(I2C2_DMA_CHANNEL_TX, &I2CDMA_InitStructure);
+        	DMA_Cmd(I2C2_DMA_CHANNEL_TX, ENABLE);
+		}
+
     }
-    ret = i;
+    else /* Reception */
+    {
+        /* Configure the DMA Rx Channel with the buffer address and the buffer size */
+        I2CDMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
 
-out:
-    i2c_dbg("send stop condition\n");
-    I2C_GenerateSTOP(I2C1, ENABLE);
+        if (I2Cx == I2C1)
+		{
+            I2CDMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)I2C1_DR_Address;
+			//DMA_Cmd(I2C1_DMA_CHANNEL_RX, DISABLE);
+	        DMA_Init(I2C1_DMA_CHANNEL_RX, &I2CDMA_InitStructure);
+	        DMA_Cmd(I2C1_DMA_CHANNEL_RX, ENABLE);
+		}
+        else 
+		{
+            I2CDMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)I2C2_DR_Address;
+		//	DMA_Cmd(I2C2_DMA_CHANNEL_RX, DISABLE);
+	        DMA_Init(I2C2_DMA_CHANNEL_RX, &I2CDMA_InitStructure);
+	        DMA_Cmd(I2C2_DMA_CHANNEL_RX, ENABLE);
+		}
 
-    return ret;
+    }
 }
 
-
-static const struct rt_i2c_bus_device_ops i2c1_ops =
-{
-    stm32_i2c_xfer,
-    RT_NULL,
-    RT_NULL
-};
-
-static struct rt_i2c_bus_device stm32_i2c1;
-
-#endif
-
-//void rt_hw_i2c_init(void)
-//{
-//    GPIO_InitTypeDef  GPIO_InitStructure;
-//
-//#ifdef RT_USING_I2C_BITOPS
-//    RCC_AHB1PeriphClockCmd(RCC_I2C_SCL | RCC_I2C_SDA, ENABLE);
-//
-//    /* config SCL PIN */
-//    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
-//    GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-//    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-//    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-//
-//    GPIO_InitStructure.GPIO_Pin = PIN_I2C_SCL;
-//    GPIO_SetBits(GPIO_PORT_I2C_SCL, PIN_I2C_SCL);
-//    GPIO_Init(GPIO_PORT_I2C_SCL, &GPIO_InitStructure);
-//
-//    /* config SDA PIN */
-//    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
-//    GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-//    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-//    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-//
-//    GPIO_InitStructure.GPIO_Pin = PIN_I2C_SDA;
-//    GPIO_SetBits(GPIO_PORT_I2C_SDA, PIN_I2C_SDA);
-//    GPIO_Init(GPIO_PORT_I2C_SDA, &GPIO_InitStructure);
-//
-//    rt_memset((void *)&i2c_device, 0, sizeof(struct rt_i2c_bus_device));
-//    i2c_device.priv = (void *)&bit_ops;
-//    rt_i2c_bit_add_bus(&i2c_device, "i2c1");
-//
-//#else
-//    I2C_InitTypeDef  I2C_InitStructure;
-//
-//    /*!< sEE_I2C Periph clock enable */
-//    RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
-//
-//    /*!< sEE_I2C_SCL_GPIO_CLK and sEE_I2C_SDA_GPIO_CLK Periph clock enable */
-//    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-//
-//    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-//
-//    /* Reset sEE_I2C IP */
-//    RCC_APB1PeriphResetCmd(RCC_APB1Periph_I2C1, ENABLE);
-//
-//    /* Release reset signal of sEE_I2C IP */
-//    RCC_APB1PeriphResetCmd(RCC_APB1Periph_I2C1, DISABLE);
-//
-//    /*!< GPIO configuration */
-//    /*!< Configure sEE_I2C pins: SCL */
-//    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-//    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-//    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-//    GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-//    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-//    GPIO_Init(GPIOB, &GPIO_InitStructure);
-//
-//    /*!< Configure sEE_I2C pins: SDA */
-//    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
-//    GPIO_Init(GPIOB, &GPIO_InitStructure);
-//
-//    /* Connect PXx to I2C_SCL*/
-//    GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_I2C1);
-//
-//    /* Connect PXx to I2C_SDA*/
-//    GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_I2C1);
-//
-//
-//    /*!< I2C configuration */
-//    /* sEE_I2C configuration */
-//    I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
-//    I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
-////	I2C_InitStructure.I2C_OwnAddress1 = SLA_ADDRESS;
-//    I2C_InitStructure.I2C_OwnAddress1 = 0x18;
-//    I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
-//    I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
-//    I2C_InitStructure.I2C_ClockSpeed = 400000;
-//
-//    /* Apply sEE_I2C configuration after enabling it */
-//    I2C_Init(I2C1, &I2C_InitStructure);
-//    /* sEE_I2C Peripheral Enable */
-//    I2C_Cmd(I2C1, ENABLE);
-//
-//    rt_memset((void *)&stm32_i2c1, 0, sizeof(struct rt_i2c_bus_device));
-//    stm32_i2c1.ops = &i2c1_ops;
-//
-//    rt_i2c_bus_device_register(&stm32_i2c1, "i2c1");
-//
-//#endif
-//}
-//
-///*******************************************************************************
-//* Function Name  : I2C_EE_WaitOperationIsCompleted
-//* Description    : wait operation is completed
-//* Input          : None 
-//* Output         : None
-//* Return         : None
-//*******************************************************************************/
-//void I2C_EE_WaitOperationIsCompleted(void)
-//{
-//	while(i2c_comm_state != COMM_DONE);
-//}	
-//
-///**********************  Interrupt Service Routines	 **************************/
-//
-//void i2c1_evt_isr()
-//{  
-//  	uint32_t lastevent=  I2C_GetLastEvent(I2C1);
-//    switch (lastevent)
-//    {
-///************************** Master Invoke**************************************/
-//          case I2C_EVENT_MASTER_MODE_SELECT:        /* EV5 */
-//            // MSL SB BUSY 30001
-//            if(!check_begin)
-//              i2c_comm_state = COMM_IN_PROCESS;
-//            
-//              if (MasterDirection == Receiver)
-//              {
-//                if (!OffsetDone)
-//				#if (EE_ADDRESS_NUM>1)
-//				I2C_Send7bitAddress(I2C1,SlaveADDR,I2C_Direction_Transmitter);
-//				#else
-//				I2C_Send7bitAddress(I2C1,((DeviceOffset & 0x0700) >>7) | SlaveADDR,
-//									 I2C_Direction_Transmitter);
-//				#endif
-//                      
-//                else
-//                {
-//                  /* Send slave Address for read */
-//				  #if (EE_ADDRESS_NUM>1)
-//				  I2C_Send7bitAddress(I2C1, SlaveADDR, I2C_Direction_Receiver); 
-//				  #else
-//                  I2C_Send7bitAddress(I2C1, ((DeviceOffset & 0x0700) >>7) | SlaveADDR, I2C_Direction_Receiver);      
-//                  #endif
-//				  OffsetDone = FALSE;
-//
-//                }
-//              }
-//              else
-//              {
-//                  /* Send slave Address for write */
-//				  #if (EE_ADDRESS_NUM>1)
-//				  I2C_Send7bitAddress(I2C1, SlaveADDR, I2C_Direction_Transmitter);
-//				  #else
-//				  I2C_Send7bitAddress(I2C1, ((DeviceOffset & 0x0700) >>7) | SlaveADDR, I2C_Direction_Transmitter);
-//				  #endif
-//                  
-//              }
-//              I2C_ITConfig(I2C1, I2C_IT_BUF , ENABLE);//also TxE int allowed
-//              break;
-//              
-///********************** Master Receiver events ********************************/
-//          case I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED:  /* EV6 */
-//            // MSL BUSY ADDR 0x30002
-//              I2C_ITConfig(I2C1, I2C_IT_EVT | I2C_IT_BUF, DISABLE);
-//              
-//              //without it, no NAK signal on bus after last Data
-//              //I2C data line would be hold low 
-//              I2C_DMALastTransferCmd(I2C1, ENABLE);
-//              
-//              I2C_DMACmd(I2C1, ENABLE);
-//              DMA_Cmd(DMA1_Channel7, ENABLE);            
-//              break;
-//      
-//          case I2C_EVENT_MASTER_BYTE_RECEIVED:    /* EV7 */
-//            // MSL BUSY RXNE 0x30040
-//              break;
-//      
-///************************* Master Transmitter events **************************/
-//          case I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED:     /* EV8 just after EV6 */
-//            //BUSY, MSL, ADDR, TXE and TRA 0x70082
-//            if (check_begin)
-//			{
-//				check_begin = FALSE;
-//				I2C_ITConfig(I2C1, I2C_IT_EVT | I2C_IT_BUF |I2C_IT_ERR, DISABLE);
-//				I2C_GenerateSTOP(I2C1, ENABLE);
-//				//!! write over
-//				I2C_EE_WriteOnePageCompleted();
-//				if(I2C_NumByteToWrite>0)
-//				{
-//					 I2C_EE_WriteOnePage(I2C_pBuffer,I2C_WriteAddr,I2C_NumByteToWrite);
-//				}
-//				else
-//				{
-//				    WriteComplete = 1;
-//				    i2c_comm_state = COMM_DONE;
-//					PV_flag_1 = 0;
-//				}
-//				
-//				break;
-//			}
-//
-//             #if (EE_ADDRESS_NUM>1)
-//				EE_Addr_Count++;
-//			  	if (EE_Addr_Count < (EE_ADDRESS_NUM))
-//		        {
-//					I2C_SendData(I2C1, DeviceOffset>>8);
-//		        }
-////				else
-////				{
-////					I2C_SendData(I2C1, DeviceOffset);
-////				}
-//			#else
-//				I2C_SendData(I2C1, DeviceOffset);
-//				OffsetDone = TRUE;
-//			#endif
-//          break;
-//              
-//          case I2C_EVENT_MASTER_BYTE_TRANSMITTING:       /* EV8 I2C_EVENT_MASTER_BYTE_TRANSMITTING*/
-//              #if (EE_ADDRESS_NUM>1)
-//			  if(!OffsetDone)
-//              {
-//                
-//	            if (EE_Addr_Count < (EE_ADDRESS_NUM))
-//	            {
-//					//while ((I2C1->CR1 & 0x200) == 0x200); 
-//	            	//I2C_GenerateSTART(I2C1, ENABLE);
-//					I2C_SendData(I2C1, DeviceOffset);
-//					EE_Addr_Count++;	
-//	            }
-//				else
-//				{
-//					EE_Addr_Count = 0;
-//					OffsetDone = TRUE;
-//				}
-//				break;
-//              }
-//			  #endif
-//			  if (MasterDirection == Receiver)
-//              {
-//                I2C_ITConfig(I2C1, I2C_IT_BUF , DISABLE);
-//                while ((I2C1->CR1 & 0x200) == 0x200); 
-//                I2C_GenerateSTART(I2C1, ENABLE);
-//                break;
-//              }
-//              else
-//              {
-//                I2C_ITConfig(I2C1, I2C_IT_EVT | I2C_IT_BUF, DISABLE);
-//                I2C_DMACmd(I2C1, ENABLE);
-//                DMA_Cmd(DMA1_Channel6, ENABLE);
-//                break;
-//              }
-//      
-//          case I2C_EVENT_MASTER_BYTE_TRANSMITTED:       /* EV8-2 */
-//            //TRA, BUSY, MSL, TXE and BTF 0x70084
-//              break;
-//    }
-//}
-//
-//
-//void i2c1_err_isr()
-//{
-//    if (I2C_GetFlagStatus(I2C1, I2C_FLAG_AF))
-//    {
-//      if (check_begin)
-//        I2C_GenerateSTART(I2C1, ENABLE);
-//      else if (I2C1->SR2 &0x01)
-//      {	
-//	  	//!! receive over
-//        I2C_GenerateSTOP(I2C1, ENABLE);
-//        i2c_comm_state = COMM_EXIT;
-//        PV_flag_1 = 0;
-//      }
-//      
-//      I2C_ClearFlag(I2C1, I2C_FLAG_AF);
-//    }
-//
-//    if (I2C_GetFlagStatus(I2C1, I2C_FLAG_BERR))
-//    {
-//      if (I2C1->SR2 &0x01)
-//      {
-//        I2C_GenerateSTOP(I2C1, ENABLE);
-//        i2c_comm_state = COMM_EXIT;
-//        PV_flag_1 = 0;
-//      }
-//      
-//      I2C_ClearFlag(I2C1, I2C_FLAG_BERR);
-//    }
-//}
-//
-//
-//
-//void i2c1_send_dma_isr()
-//{
-//
-//  if (DMA_GetFlagStatus(DMA1_FLAG_TC6))
-//  {
-//    if (I2C1->SR2 & 0x01) // master send DMA finish, check process later
-//    {
-//      // DMA1-6 (I2C1 Tx DMA)transfer complete ISR
-//      I2C_DMACmd(I2C1, DISABLE);
-//      DMA_Cmd(DMA1_Channel6, DISABLE);
-//      // wait until BTF
-//      while (!(I2C1->SR1 & 0x04));
-//      I2C_GenerateSTOP(I2C1, ENABLE);
-//      // wait until BUSY clear
-//      while (I2C1->SR2 & 0x02);
-//    
-//      MasterTransitionComplete=1;
-//      i2c_comm_state = COMM_IN_PROCESS;
-//      I2C_ITConfig(I2C1, I2C_IT_EVT, ENABLE); // use interrupt to handle check process
-//      check_begin = TRUE;
-//      if(I2C1->CR1 & 0x200)
-//        I2C1->CR1 &= 0xFDFF;
-//      I2C_GenerateSTART(I2C1, ENABLE);
-//    }
-//    else // slave send DMA finish
-//    {
-//
-//    }
-//
-//    
-//    DMA_ClearFlag(DMA1_FLAG_TC6);
-//  }
-//  if (DMA_GetFlagStatus(DMA1_FLAG_GL6))
-//  {
-//    DMA_ClearFlag( DMA1_FLAG_GL6);
-//  }
-//    if (DMA_GetFlagStatus(DMA1_FLAG_HT6))
-//  {
-//    DMA_ClearFlag( DMA1_FLAG_HT6);
-//  }
-//}
-//
-//void i2c1_receive_dma_isr()
-//{
-//  if (DMA_GetFlagStatus(DMA1_FLAG_TC7))
-//  {
-//    if (I2C1->SR2 & 0x01) // master receive DMA finish
-//    {
-//      I2C_DMACmd(I2C1, DISABLE);
-//      I2C_GenerateSTOP(I2C1, ENABLE);
-//      i2c_comm_state = COMM_DONE;
-//      MasterReceptionComplete = 1;
-//      PV_flag_1 =0;
-//    }
-//    else // slave receive DMA finish
-//    {
-//
-//    }
-//    DMA_ClearFlag(DMA1_FLAG_TC7);
-//  }
-//  if (DMA_GetFlagStatus(DMA1_FLAG_GL7))
-//  {
-//    DMA_ClearFlag( DMA1_FLAG_GL7);
-//  }
-//    if (DMA_GetFlagStatus(DMA1_FLAG_HT7))
-//  {
-//    DMA_ClearFlag( DMA1_FLAG_HT7);
-//  }
-//}
-//
-//
-///*******************************************************************************
-//* Function Name  : DMA1_Channel6_IRQHandler
-//* Description    : This function handles DMA1 Channel 6 interrupt request.
-//* Input          : None
-//* Output         : None
-//* Return         : None
-//*******************************************************************************/
-//void DMA1_Channel6_IRQHandler(void)
-//{
-//  i2c1_send_dma_isr();
-//}
-//
-///*******************************************************************************
-//* Function Name  : DMA1_Channel7_IRQHandler
-//* Description    : This function handles DMA1 Channel 7 interrupt request.
-//* Input          : None
-//* Output         : None
-//* Return         : None
-//*******************************************************************************/
-//void DMA1_Channel7_IRQHandler(void)
-//{
-//  i2c1_receive_dma_isr();
-//}
-//
-///*******************************************************************************
-//* Function Name  : I2C1_EV_IRQHandler
-//* Description    : This function handles I2C1 Event interrupt request.
-//* Input          : None
-//* Output         : None
-//* Return         : None
-//*******************************************************************************/
-//void I2C1_EV_IRQHandler(void)
-//{
-//  i2c1_evt_isr();
-//}
-//
-///*******************************************************************************
-//* Function Name  : I2C1_ER_IRQHandler
-//* Description    : This function handles I2C1 Error interrupt request.
-//* Input          : None
-//* Output         : None
-//* Return         : None
-//*******************************************************************************/
-//void I2C1_ER_IRQHandler(void)
-//{
-//  i2c1_err_isr();
-//}
