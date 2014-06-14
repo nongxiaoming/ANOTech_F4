@@ -1,7 +1,7 @@
 #ifndef I2C_H
 #define I2C_H
 
-#include "stm32f2xx.h"
+#include "stm32f4xx.h"
 
 /* Exported constants --------------------------------------------------------*/
 

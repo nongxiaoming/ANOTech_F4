@@ -14,9 +14,6 @@
 
 #include <rtthread.h>
 #include "drv_i2c.h"
-#include "stm32f2xx_rcc.h"
-#include "stm32f2xx_i2c.h"
-#include "stm32f2xx_dma.h"
 
 #define EV_SB		1
 #define EV_ADDR		(1<<1)
