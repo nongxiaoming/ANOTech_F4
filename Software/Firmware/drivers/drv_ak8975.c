@@ -1,4 +1,4 @@
-#include "ak8975.h"
+#include "drv_ak8975.h"
 
 vs16 AK8975_Data[3];
 u8 data_temp[6];
