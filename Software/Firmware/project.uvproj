@@ -465,6 +465,21 @@
               <FileType>1</FileType>
               <FilePath>drivers\stm32f4xx_it.c</FilePath>
             </File>
+            <File>
+              <FileName>drv_ak8975.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\drv_ak8975.c</FilePath>
+            </File>
+            <File>
+              <FileName>drv_mpu6050.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\drv_mpu6050.c</FilePath>
+            </File>
+            <File>
+              <FileName>drv_ms5611.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\drv_ms5611.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
