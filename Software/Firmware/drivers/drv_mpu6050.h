@@ -1,11 +1,54 @@
-#ifndef __DRV_MPU6050_H__
-#define __DRV_MPU6050_H__
 
+#ifndef __STM32_EVAL_I2C_TSENSOR_CPAL_H
+#define __STM32_EVAL_I2C_TSENSOR_CPAL_H
+
+#include "drv_i2c.h"
+   
+/** 
+  * @brief  TSENSOR Status  
+  */ 
+typedef enum
+{
+  MPU6050_OK = 0,
+  MPU6050_FAIL
+}MPU6050_Status_TypDef;
+
+
+#define MPU6050_i2c                i2c1_dev   
+
+
+#define I2C_SPEED                        400000
+
+
+   
+#define MPU6050_TIMEOUT        ((uint32_t)0x3FFFF)
+
+/**
+  * @brief  Internal register Memory
+  */
+#define MPU6050_ADDRESS         0xD0
 #define MPU6050_ADDRESS_AD0_LOW     0x68 // address pin low (GND), default for InvenSense evaluation board
 #define MPU6050_ADDRESS_AD0_HIGH    0x69 // address pin high (VCC)
 #define MPU6050_DEFAULT_ADDRESS     MPU6050_ADDRESS_AD0_LOW
 
-#define MPU6050_RA_AUX_VDDIO        0x01
+#define MPU6050_RA_XG_OFFS_TC       0x00 //[7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
+#define MPU6050_RA_YG_OFFS_TC       0x01 //[7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
+#define MPU6050_RA_ZG_OFFS_TC       0x02 //[7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD
+#define MPU6050_RA_X_FINE_GAIN      0x03 //[7:0] X_FINE_GAIN
+#define MPU6050_RA_Y_FINE_GAIN      0x04 //[7:0] Y_FINE_GAIN
+#define MPU6050_RA_Z_FINE_GAIN      0x05 //[7:0] Z_FINE_GAIN
+#define MPU6050_RA_XA_OFFS_H        0x06 //[15:0] XA_OFFS
+#define MPU6050_RA_XA_OFFS_L_TC     0x07
+#define MPU6050_RA_YA_OFFS_H        0x08 //[15:0] YA_OFFS
+#define MPU6050_RA_YA_OFFS_L_TC     0x09
+#define MPU6050_RA_ZA_OFFS_H        0x0A //[15:0] ZA_OFFS
+#define MPU6050_RA_ZA_OFFS_L_TC     0x0B
+#define MPU6050_RA_XG_OFFS_USRH     0x13 //[15:0] XG_OFFS_USR
+#define MPU6050_RA_XG_OFFS_USRL     0x14
+#define MPU6050_RA_YG_OFFS_USRH     0x15 //[15:0] YG_OFFS_USR
+#define MPU6050_RA_YG_OFFS_USRL     0x16
+#define MPU6050_RA_ZG_OFFS_USRH     0x17 //[15:0] ZG_OFFS_USR
+#define MPU6050_RA_ZG_OFFS_USRL     0x18
 #define MPU6050_RA_SMPLRT_DIV       0x19
 #define MPU6050_RA_CONFIG           0x1A
 #define MPU6050_RA_GYRO_CONFIG      0x1B
@@ -38,6 +81,7 @@
 #define MPU6050_RA_I2C_MST_STATUS   0x36
 #define MPU6050_RA_INT_PIN_CFG      0x37
 #define MPU6050_RA_INT_ENABLE       0x38
+#define MPU6050_RA_DMP_INT_STATUS   0x39
 #define MPU6050_RA_INT_STATUS       0x3A
 #define MPU6050_RA_ACCEL_XOUT_H     0x3B
 #define MPU6050_RA_ACCEL_XOUT_L     0x3C
@@ -88,12 +132,20 @@
 #define MPU6050_RA_USER_CTRL        0x6A
 #define MPU6050_RA_PWR_MGMT_1       0x6B
 #define MPU6050_RA_PWR_MGMT_2       0x6C
+#define MPU6050_RA_BANK_SEL         0x6D
+#define MPU6050_RA_MEM_START_ADDR   0x6E
+#define MPU6050_RA_MEM_R_W          0x6F
+#define MPU6050_RA_DMP_CFG_1        0x70
+#define MPU6050_RA_DMP_CFG_2        0x71
 #define MPU6050_RA_FIFO_COUNTH      0x72
 #define MPU6050_RA_FIFO_COUNTL      0x73
 #define MPU6050_RA_FIFO_R_W         0x74
 #define MPU6050_RA_WHO_AM_I         0x75
 
-#define MPU6050_VDDIO_BIT           7
+#define MPU6050_TC_PWR_MODE_BIT     7
+#define MPU6050_TC_OFFSET_BIT       6
+#define MPU6050_TC_OFFSET_LENGTH    6
+#define MPU6050_TC_OTP_BNK_VLD_BIT  0
 
 #define MPU6050_VDDIO_LEVEL_VLOGIC  0
 #define MPU6050_VDDIO_LEVEL_VDD     1
@@ -235,7 +287,18 @@
 #define MPU6050_INTERRUPT_ZMOT_BIT          5
 #define MPU6050_INTERRUPT_FIFO_OFLOW_BIT    4
 #define MPU6050_INTERRUPT_I2C_MST_INT_BIT   3
+#define MPU6050_INTERRUPT_PLL_RDY_INT_BIT   2
+#define MPU6050_INTERRUPT_DMP_INT_BIT       1
 #define MPU6050_INTERRUPT_DATA_RDY_BIT      0
+
+// TODO: figure out what these actually do
+// UMPL source code is not very obivous
+#define MPU6050_DMPINT_5_BIT            5
+#define MPU6050_DMPINT_4_BIT            4
+#define MPU6050_DMPINT_3_BIT            3
+#define MPU6050_DMPINT_2_BIT            2
+#define MPU6050_DMPINT_1_BIT            1
+#define MPU6050_DMPINT_0_BIT            0
 
 #define MPU6050_MOTION_MOT_XNEG_BIT     7
 #define MPU6050_MOTION_MOT_XPOS_BIT     6
@@ -268,9 +331,11 @@
 #define MPU6050_DETECT_DECREMENT_2      0x2
 #define MPU6050_DETECT_DECREMENT_4      0x3
 
+#define MPU6050_USERCTRL_DMP_EN_BIT             7
 #define MPU6050_USERCTRL_FIFO_EN_BIT            6
 #define MPU6050_USERCTRL_I2C_MST_EN_BIT         5
 #define MPU6050_USERCTRL_I2C_IF_DIS_BIT         4
+#define MPU6050_USERCTRL_DMP_RESET_BIT          3
 #define MPU6050_USERCTRL_FIFO_RESET_BIT         2
 #define MPU6050_USERCTRL_I2C_MST_RESET_BIT      1
 #define MPU6050_USERCTRL_SIG_COND_RESET_BIT     0
@@ -279,8 +344,8 @@
 #define MPU6050_PWR1_SLEEP_BIT          6
 #define MPU6050_PWR1_CYCLE_BIT          5
 #define MPU6050_PWR1_TEMP_DIS_BIT       3
-#define MPU6050_PWR1_CLK_SEL_BIT        2
-#define MPU6050_PWR1_CLK_SEL_LENGTH     3
+#define MPU6050_PWR1_CLKSEL_BIT         2
+#define MPU6050_PWR1_CLKSEL_LENGTH      3
 
 #define MPU6050_CLOCK_INTERNAL          0x00
 #define MPU6050_CLOCK_PLL_XGYRO         0x01
@@ -304,7 +369,34 @@
 #define MPU6050_WAKE_FREQ_5         0x2
 #define MPU6050_WAKE_FREQ_10        0x3
 
+#define MPU6050_BANKSEL_PRFTCH_EN_BIT       6
+#define MPU6050_BANKSEL_CFG_USER_BANK_BIT   5
+#define MPU6050_BANKSEL_MEM_SEL_BIT         4
+#define MPU6050_BANKSEL_MEM_SEL_LENGTH      5
+
 #define MPU6050_WHO_AM_I_BIT        6
 #define MPU6050_WHO_AM_I_LENGTH     6
+   
 
-#endif
+/* Exported macro ------------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */ 
+
+void MPU6050_DeInit(void);
+void MPU6050_Config(void);
+ void MPU6050_StructInit(void);
+ void MPU6050_Init(void);
+int16_t MPU6050_ReadTemp(void);
+uint8_t MPU6050_ReadReg(uint8_t RegName);
+uint8_t MPU6050_WriteReg(uint8_t RegName, uint8_t RegValue);
+
+uint8_t MPU6050_ShutDown(FunctionalState NewState);
+
+void MPU6050ReadTemp(short *tempData);
+void MPU6050ReadGyro(short *gyroData);
+void MPU6050ReadData(short *accData);
+
+u8 MPU6050ReadID(void);
+
+
+#endif 
+
