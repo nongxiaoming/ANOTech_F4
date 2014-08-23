@@ -1,4 +1,3 @@
-
 #include "drv_i2c.h"
 
 
@@ -13,7 +12,6 @@
                                                  }\
                                                  i2c_dev->timeout = I2C_TIMEOUT_DEFAULT
                                                    
-/* Private variables ---------------------------------------------------------*/
 
 /*========= Table Exported from HAL =========*/
 
@@ -22,13 +20,9 @@ extern I2C_TypeDef* I2C_DEVICE[];
 #ifdef I2C_DMA_PROGMODEL
 extern DMA_TypeDef* I2C_DMA[];
 
-#if defined (STM32F2XX) || defined (STM32F4XX)
 extern DMA_Stream_TypeDef* I2C_DMA_TX_Stream[]; 
 extern DMA_Stream_TypeDef* I2C_DMA_RX_Stream[];
-#else
-extern DMA_Channel_TypeDef* I2C_DMA_TX_Channel[]; 
-extern DMA_Channel_TypeDef* I2C_DMA_RX_Channel[];
-#endif
+
 
 extern const uint32_t I2C_DMA_TX_TC_FLAG[];
 extern const uint32_t I2C_DMA_RX_TC_FLAG[];

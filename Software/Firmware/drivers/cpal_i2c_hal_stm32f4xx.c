@@ -3,28 +3,6 @@
 #include "drv_i2c.h"
 
 
-i2c_dev_t* i2c_devs[I2C_DEV_NUM] =
-{
-#ifdef USE_I2C1 
-  &i2c1_dev,
-#else
-  pNULL,
-#endif
-
-#ifdef USE_I2C2 
-  &i2c2_dev,
-#else
-  pNULL,
-#endif
-
-#ifdef USE_I2C3 
- &i2c3_dev,
-#else
-  pNULL,
-#endif
-};
-
-
 #ifdef USE_I2C1 
 i2c_dev_t i2c1_dev = { I2C1_Dev,                          /* I2C1 device number */
 	                                       I2C1,
