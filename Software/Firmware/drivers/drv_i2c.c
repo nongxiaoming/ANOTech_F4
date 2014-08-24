@@ -1058,44 +1058,35 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
   * @param  None
   * @retval I2C_PASS or I2C_FAIL. 
   */
-void I2C_TIMEOUT_Manager(void)
+void I2C_TIMEOUT_Manager1(void)
 {
-  uint32_t index = 0;
-  
-  /* Manage I2C timeouts conditions */
-  for (index = 0; index < I2C_DEV_NUM; index ++)
-  {
-    if (i2c_devs[index] != pNULL)
-    {
       /* If Timeout occurred  */
-      if (i2c_devs[index]->timeout == I2C_TIMEOUT_DETECTED)
+      if (i2c1_dev.timeout == I2C_TIMEOUT_DETECTED)
       {
         /* Reinitialize Timeout Value */
-        i2c_devs[index]->timeout = I2C_TIMEOUT_DEFAULT;
+        i2c1_dev.timeout = I2C_TIMEOUT_DEFAULT;
         
         /* update State to I2C_STATE_ERROR */
-        i2c_devs[index]->state = I2C_STATE_ERROR;
+        i2c1_dev.state = I2C_STATE_ERROR;
         
         /* In case of Device Error Timeout_Callback should not be called */
-        if (i2c_devs[index]->error == I2C_ERR_NONE)
+        if (i2c1_dev.error == I2C_ERR_NONE)
         {        
           /* update wDevError to I2C_ERR_TIMEOUT */
-          i2c_devs[index]->error = I2C_ERR_TIMEOUT;
+          i2c1_dev.error = I2C_ERR_TIMEOUT;
           
           I2C_LOG("\n\r\n\rLOG <I2C_TIMEOUT_Manager> : I2C Device Timeout Error");
           
           /* Call I2C_TIMEOUT_UserCallback */
-          I2C_TIMEOUT_UserCallback(i2c_devs[index]);
+          I2C_TIMEOUT_UserCallback(&i2c1_dev);
         }              
       }     
        /* If Timeout is triggered (wTimeout != I2C_TIMEOUT_DEFAULT)*/
-      else if (i2c_devs[index]->timeout != I2C_TIMEOUT_DEFAULT)
+      else if (i2c1_dev.timeout != I2C_TIMEOUT_DEFAULT)
       {
         /* Decrement the timeout value */
-        i2c_devs[index]->timeout--;
+        i2c1_dev.timeout--;
       } 
-    }
-  }  
 }
 
 

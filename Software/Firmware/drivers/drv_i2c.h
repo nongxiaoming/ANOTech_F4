@@ -9,12 +9,6 @@
  extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
-
-/* Exported types ------------------------------------------------------------*/
-   
-/*========= I2CError_TypeDef =========*/ 
-/* I2C Errors TypeDef */
    
 typedef enum
 {
@@ -34,10 +28,6 @@ typedef enum
  }I2CErrorTypeDef;
 
 
-
-/*========= I2C_PROGMODEL_INTERRUPT_I2C_Exported_Functions =========*/
-/* These functions constitute the main I2C API interface. All functions take as argument the 
-   I2CDev_InitTypeDef structure defined in @ref CPAL_Dev_TypeDef. */
 
 uint32_t  I2CDev_Init         (i2c_dev_t* i2c_dev); /*<!This function Initializes the selected I2C device 
                                                                         and all needed resources (GPIOs, clocks, DMA, 
@@ -79,10 +69,6 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction);
                                                                                                     and Interrupts before starting 
                                                                                                     transfer phase */
 
-/*========= I2C_User_Callbacks =========*/
-/* These functions prototypes only are declared here. User can (optionally) 
-   implement the function body in his own application depending on the application needs.
-   Each callback is called in a particular situation detailed in the callback description. */
 
 #ifndef I2C_TX_UserCallback
 void I2C_TX_UserCallback   (i2c_dev_t* i2c_dev); /*<!This function is called when (in Interrupt mode) 

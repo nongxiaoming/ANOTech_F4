@@ -10,27 +10,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "cpal_conf.h"
- 
-/* If STM32F10X family is used */
-#if defined (STM32F10X_LD) || defined (STM32F10X_LD_VL) || defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)\
- || defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_XL) || defined (STM32F10X_CL)
-#include "stm32f10x.h"
-#endif
-   
-/* If STM32L1XX family is used */
-#if defined (STM32L1XX_MD) || defined (STM32L1XX_HD)
-#include "stm32l1xx.h"
-#endif 
-  
-/* If STM32F2XX family is used */   
-#ifdef STM32F2XX
-#include "stm32f2xx.h"
-#endif 
- 
-/* If STM32F4XX family is used */   
-#ifdef STM32F4XX
 #include "stm32f4xx.h"
-#endif
   
 
   
@@ -156,12 +136,9 @@ typedef struct
 
 
 /*========= Table containing all I2C device structures =========*/
-extern i2c_dev_t* i2c_devs[];
 
-
-#ifdef USE_I2C1 
 extern i2c_dev_t i2c1_dev;
-#endif /* USE_I2C1 */
+
 
 
 

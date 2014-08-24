@@ -3,7 +3,6 @@
 #include "drv_i2c.h"
 
 
-#ifdef USE_I2C1 
 i2c_dev_t i2c1_dev = { I2C1_Dev,                          /* I2C1 device number */
 	                                       I2C1,
                                         I2C_DIRECTION_TXRX,                /* Transmitter and Receiver direction selected */
@@ -23,7 +22,6 @@ i2c_dev_t i2c1_dev = { I2C1_Dev,                          /* I2C1 device number 
                                         ((uint32_t)I2C_TIMEOUT_DEFAULT)/* Set timeout value to I2C_TIMEOUT_DEFAULT */ 
                                         };          
   
-#endif /* USE_I2C1 */
 
 
 
