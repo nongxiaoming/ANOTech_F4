@@ -26,7 +26,7 @@ uint32_t I2C_TIMEOUT_UserCallback(i2c_dev_t* i2c_dev)
 
   I2CDev_Init(i2c_dev);
 
-  printf("I2C_TIMEOUT_UserCallback\r\n");
+  rt_kprintf("I2C_TIMEOUT_UserCallback\r\n");
 	
   return RT_EOK;
 }
@@ -167,7 +167,7 @@ void I2C_ERR_UserCallback(i2c_dev_t* i2c_dev, uint32_t DeviceError)
   i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;
   I2CDev_Init(i2c_dev);
  
-	printf("I2C_ERR_UserCallback\r\n");
+	rt_kprintf("I2C_ERR_UserCallback\r\n");
 }
 
 
