@@ -118,40 +118,4 @@ void rt_hw_board_init()
 #endif
 }
 
-#define TICK_MS (1000ULL/RT_TICK_PER_SECOND)
-#define TICK_US	(1000000ULL/RT_TICK_PER_SECOND)
-
-#include <rtm.h>
-
-/**
- * get millisecond since system passed
- */
-rt_uint32_t rt_hw_tick_get_millisecond(void)
-{
-    rt_tick_t tick;
-    rt_uint32_t value;
-
-    tick = rt_tick_get();
-    value = tick * TICK_MS + (SysTick->LOAD - SysTick->VAL) * TICK_MS / SysTick->LOAD;
-
-    return value;
-}
-
-/**
- * get microsecond since system passed
- */
-rt_uint32_t rt_hw_tick_get_microsecond(void)
-{
-    rt_tick_t tick;
-    rt_uint32_t value;
-
-    tick = rt_tick_get();
-    value = tick * TICK_US + (SysTick->LOAD - SysTick->VAL) * TICK_US / SysTick->LOAD;
-
-    return value;
-}
-
-RTM_EXPORT(rt_hw_tick_get_millisecond);
-RTM_EXPORT(rt_hw_tick_get_microsecond);
-
 /*@}*/
