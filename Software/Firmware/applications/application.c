@@ -23,11 +23,11 @@ static void thread_entry(void* parameter)
     sys_led_init();
 
     rt_platform_init();
-    rt_components_init();
 
 #ifdef RT_USING_DFS
-   
+   dfs_init();
 #ifdef RT_USING_DFS_ELMFAT
+	  elm_init();
         if (dfs_mount("sd0", "/", "elm", 0, 0) == 0)
         {
             rt_kprintf("SDCard File System initialized!\n");
@@ -39,25 +39,11 @@ static void thread_entry(void* parameter)
 #endif
 #endif
 
-#ifdef RT_USING_USB_DEVICE
-    /* usb device controller driver initilize */
-    rt_hw_usbd_init();
 
-    rt_usb_device_init("usbd");
 
-    rt_usb_vcom_init();
-#endif
 
-//#ifdef RT_USING_USB_HOST
-//    /* register stm32 usb host controller driver */
-//    rt_hw_susb_init();
-//#endif
-
-	/* re-set console and finsh device */
-#ifdef RT_USING_CONSOLE
-		rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
-#endif
 #ifdef RT_USING_FINSH
+		finsh_system_init();
 		finsh_set_device(RT_CONSOLE_DEVICE_NAME);
 #endif
 
