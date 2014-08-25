@@ -190,13 +190,6 @@ extern i2c_dev_t i2c1_dev;
                                                                     own address. This option must not be used with No Stop generation mode */
 
 
-/*========= CPAL_Interne_Defines =========*/
-
-#define I2C_PASS             ((uint32_t)0x00000000) /*!<This value is returned if the last operation succeed */
-    
-#define I2C_FAIL             ((uint32_t)0x00000001) /*!<This value is returned if the last operation failed */
-  
-#define pNULL                 (void*)0  /*!<This Value is used to initialise a null pointer */ 
 
 
 

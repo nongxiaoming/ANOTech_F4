@@ -61,7 +61,7 @@ void MPU6050_DeInit(void)
 
 static uint32_t MPU6050_Status (void)
 {
-  MPU6050_i2c.buffer = pNULL ;    
+  MPU6050_i2c.buffer = RT_NULL ;    
   MPU6050_i2c.addr = (uint32_t)MPU6050_ADDRESS;
   
   return I2C_IsDeviceReady(&MPU6050_i2c);
@@ -75,7 +75,7 @@ static uint32_t MPU6050_Status (void)
 ErrorStatus MPU6050_GetStatus(void)
 {  
   /* Test if MPU6050 is ready */
-  while ((MPU6050_Status() == I2C_FAIL) && MPU6050_Timeout)  
+  while ((MPU6050_Status() == RT_ERROR) && MPU6050_Timeout)  
   {
     MPU6050_Timeout--;
   }
@@ -115,7 +115,7 @@ uint8_t MPU6050_ReadReg(uint8_t RegName)
   MPU6050_i2c.reg   = (uint32_t)RegName;
   
   /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == I2C_PASS)
+  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
   {
     while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
     { }
@@ -153,7 +153,7 @@ uint8_t MPU6050_WriteReg(uint8_t RegName, uint8_t RegValue)
   MPU6050_i2c.reg    = (uint32_t)RegName;
   
   /* Write Operation */
-  if(I2C_Write(&MPU6050_i2c) == I2C_PASS)
+  if(I2C_Write(&MPU6050_i2c) == RT_EOK)
   {
     while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
     { }
@@ -298,7 +298,7 @@ int16_t MPU6050_ReadTemp(void)
   MPU6050_i2c.reg   = (uint32_t)MPU6050_RA_TEMP_OUT_H;
   
   /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == I2C_PASS)
+  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
   {
     while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
     { }
@@ -331,7 +331,7 @@ uint8_t MPU6050ReadID(void)
   MPU6050_i2c.reg    = (uint32_t)MPU6050_RA_WHO_AM_I;
   
   /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == I2C_PASS)
+  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
   {
     while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
     { }
@@ -355,7 +355,7 @@ void MPU6050ReadData(short *Data)
   MPU6050_i2c.reg   = (uint32_t)MPU6050_RA_ACCEL_XOUT_H;
   
   /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == I2C_PASS)
+  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
   {
     while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
     { }
@@ -381,7 +381,7 @@ void MPU6050ReadGyro(short *gyroData)
   MPU6050_i2c.reg   = (uint32_t)MPU6050_RA_GYRO_ZOUT_H;
   
   /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == I2C_PASS)
+  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
   {
     while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
     { }

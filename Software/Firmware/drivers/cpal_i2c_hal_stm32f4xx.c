@@ -11,7 +11,7 @@ i2c_dev_t i2c1_dev = { I2C1_Dev,                          /* I2C1 device number 
                                         #else
                                         I2C_PROGMODEL_INTERRUPT,           /* IT Programming Model selected */
                                         #endif /* I2C_DMA_PROGMODEL */
-                                        pNULL,       /* Point pCPAL_TransferTx to a Null pointer */ 
+                                        RT_NULL,       /* Point pCPAL_TransferTx to a Null pointer */ 
                                         0,       
 	                                      0,
 	                                      0,
@@ -55,17 +55,6 @@ const IRQn_Type I2C_DMA_RX_IRQn[3] = {I2C1_DMA_RX_IRQn, I2C2_DMA_RX_IRQn, I2C3_D
 const IRQn_Type I2C_IT_EVT_IRQn[3] = {I2C1_IT_EVT_IRQn, I2C2_IT_EVT_IRQn, I2C3_IT_EVT_IRQn};
 const IRQn_Type I2C_IT_ERR_IRQn [3] = {I2C1_IT_ERR_IRQn, I2C2_IT_ERR_IRQn, I2C3_IT_ERR_IRQn};
 
-const uint8_t I2C_IT_EVT_PREPRIO[3] = {I2C1_IT_EVT_PREPRIO, I2C2_IT_EVT_PREPRIO, I2C3_IT_EVT_PREPRIO};
-const uint8_t I2C_IT_EVT_SUBPRIO[3] = {I2C1_IT_EVT_SUBPRIO, I2C2_IT_EVT_SUBPRIO, I2C3_IT_EVT_SUBPRIO};
-
-const uint8_t I2C_IT_ERR_PREPRIO[3] = {I2C1_IT_ERR_PREPRIO, I2C2_IT_ERR_PREPRIO, I2C3_IT_ERR_PREPRIO};
-const uint8_t I2C_IT_ERR_SUBPRIO[3] = {I2C1_IT_ERR_SUBPRIO, I2C2_IT_ERR_SUBPRIO, I2C3_IT_ERR_SUBPRIO};
-
-const uint8_t I2C_IT_DMATX_PREPRIO[3] = {I2C1_IT_DMATX_PREPRIO, I2C2_IT_DMATX_PREPRIO, I2C3_IT_DMATX_PREPRIO};
-const uint8_t I2C_IT_DMATX_SUBPRIO[3] = {I2C1_IT_DMATX_SUBPRIO, I2C2_IT_DMATX_SUBPRIO, I2C3_IT_DMATX_SUBPRIO};
-
-const uint8_t I2C_IT_DMARX_PREPRIO[3] = {I2C1_IT_DMARX_PREPRIO, I2C2_IT_DMARX_PREPRIO, I2C3_IT_DMARX_PREPRIO};
-const uint8_t I2C_IT_DMARX_SUBPRIO[3] = {I2C1_IT_DMARX_SUBPRIO, I2C2_IT_DMARX_SUBPRIO, I2C3_IT_DMARX_SUBPRIO};
 
 DMA_TypeDef* I2C_DMA[3] = {I2C1_DMA, I2C2_DMA, I2C3_DMA}; 
 
@@ -365,8 +354,8 @@ void I2C_HAL_ITInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDe
   
   /* Configure NVIC for I2Cx EVT Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_EVT_IRQn [Device] ;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_EVT_PREPRIO[Device];
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_EVT_SUBPRIO[Device];
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_EVT_PREPRIO;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_EVT_SUBPRIO;
   NVIC_Init(&NVIC_InitStructure);
   
   /* If I2C ERR Interrupt Option Bit not selected */ 
@@ -374,8 +363,8 @@ void I2C_HAL_ITInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDe
   {
     /* Configure NVIC for I2Cx ERR Interrupt */
     NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_ERR_IRQn  [Device] ;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_ERR_PREPRIO[Device];
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_ERR_SUBPRIO[Device];
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_ERR_PREPRIO;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_ERR_SUBPRIO;
     NVIC_Init(&NVIC_InitStructure);
     
     /* Enable I2C Error Interrupts */
@@ -389,8 +378,8 @@ void I2C_HAL_ITInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDe
     {   
       /* Configure NVIC for DMA TX channel interrupt */
       NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_TX_IRQn [Device] ;
-      NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_DMATX_PREPRIO[Device];
-      NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_DMATX_SUBPRIO[Device];
+      NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_DMATX_PREPRIO;
+      NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_DMATX_SUBPRIO;
       NVIC_Init(&NVIC_InitStructure);
       
       /* Enable DMA TX Channel TCIT  */
@@ -411,8 +400,8 @@ void I2C_HAL_ITInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDe
     {
       /* Configure NVIC for DMA RX channel interrupt */
       NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_RX_IRQn [Device] ;
-      NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_DMARX_PREPRIO[Device];
-      NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_DMARX_SUBPRIO[Device];
+      NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_DMARX_PREPRIO;
+      NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_DMARX_SUBPRIO;
       NVIC_Init(&NVIC_InitStructure);
       
       /* Enable DMA RX Channel TCIT  */
@@ -494,7 +483,7 @@ void I2C_HAL_ITDeInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionType
 /**
   * @brief  This function handles I2C1 interrupt request.
   * @param  None. 
-  * @retval I2C_PASS. 
+  * @retval RT_EOK. 
   */
 uint32_t I2C1_EV_IRQHandler(void)
 {  
@@ -506,7 +495,7 @@ uint32_t I2C1_EV_IRQHandler(void)
 /**
   * @brief  This function handles I2C1 Errors interrupt.
   * @param  None. 
-  * @retval I2C_PASS. 
+  * @retval RT_EOK. 
   */
 uint32_t I2C1_ER_IRQHandler(void)
 {
@@ -515,14 +504,14 @@ uint32_t I2C1_ER_IRQHandler(void)
   /* Call the Common Error handler function */
   I2C_ER_IRQHandler(&i2c1_dev);
   
-  return I2C_PASS;  
+  return RT_EOK;  
 }
 
  #ifdef I2C_DMA_PROGMODEL
 /**
   * @brief  This function handles I2C1 TX DMA interrupt request.
   * @param  None. 
-  * @retval I2C_PASS. 
+  * @retval RT_EOK. 
   */
 uint32_t I2C1_DMA_TX_IRQHandler(void)
 {
@@ -534,7 +523,7 @@ uint32_t I2C1_DMA_TX_IRQHandler(void)
 /**
   * @brief  This function handles I2C1 RX DMA interrupt request.
   * @param  None. 
-  * @retval I2C_PASS. 
+  * @retval RT_EOK. 
   */
 uint32_t I2C1_DMA_RX_IRQHandler(void)
 {

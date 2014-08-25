@@ -28,7 +28,7 @@ uint32_t I2C_TIMEOUT_UserCallback(i2c_dev_t* i2c_dev)
 
   printf("I2C_TIMEOUT_UserCallback\r\n");
 	
-  return I2C_PASS;
+  return RT_EOK;
 }
 
 

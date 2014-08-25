@@ -68,7 +68,7 @@ static uint32_t I2C_Timeout (i2c_dev_t* i2c_dev);
   *         Interrupts according to the specified parameters in the 
   *         I2CDev_InitTypeDef structure.
   * @param  i2c_dev : Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL 
+  * @retval RT_EOK or RT_ERROR 
   */
 uint32_t I2CDev_Init(i2c_dev_t* i2c_dev) 
 {
@@ -94,7 +94,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       i2c_dev->state = I2C_STATE_ERROR;
       
       /* Exit Init function */
-      return I2C_FAIL;
+      return RT_ERROR;
     }
 #endif /* I2C_DMA_PROGMODEL */
     
@@ -105,7 +105,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       i2c_dev->state = I2C_STATE_ERROR;
       
       /* Exit Init function */
-      return I2C_FAIL;
+      return RT_ERROR;
     }
 #endif /* I2C_IT_PROGMODEL */ 
         
@@ -222,16 +222,16 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     I2C_LOG("\n\rLOG : I2C Device Ready"); 
     
     /* Initialize Timeout Procedure */
-    TIMEOUT_INIT();
+    //TIMEOUT_INIT();
     
-    return I2C_PASS;
+    return RT_EOK;
   }    
   /* If State is BUSY (a transaction is still on going) Exit Init function */
   else 
   {
     I2C_LOG("\n\rERROR : I2C Device Busy"); 
     
-    return I2C_FAIL; 
+    return RT_ERROR; 
   }
 }
 
@@ -240,7 +240,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
   * @brief  Deinitialize the peripheral and all related clocks, GPIOs, DMA and NVIC 
   *         to their reset values.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL
+  * @retval RT_EOK or RT_ERROR
   * @note   The Peripheral clock is disabled but the GPIO Ports clocks remains 
   *         enabled after this deinitialization. 
   */
@@ -318,16 +318,16 @@ uint32_t I2CDev_DeInit(i2c_dev_t* i2c_dev)
     /*----------------------------------------------------------------------------
     Deinitialize Timeout Procedure
     -----------------------------------------------------------------------------*/
-    TIMEOUT_DEINIT();  
+    //TIMEOUT_DEINIT();  
     
-    return I2C_PASS;
+    return RT_EOK;
   }  
   /* If State is BUSY (a transaction is still on going) Exit Init function */
   else 
   {
     I2C_LOG("\n\rERROR : I2C Device Busy"); 
     
-    return I2C_FAIL; 
+    return RT_ERROR; 
   }
 }
 
@@ -336,7 +336,7 @@ uint32_t I2CDev_DeInit(i2c_dev_t* i2c_dev)
   * @brief  Initialize the peripheral structure with default values according
   *         to the specified parameters in the I2CDevTypeDef structure.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 uint32_t I2CDev_StructInit(i2c_dev_t* i2c_dev) 
 {   
@@ -359,14 +359,14 @@ uint32_t I2CDev_StructInit(i2c_dev_t* i2c_dev)
   
   I2C_LOG("\n\r\n\rLOG <I2CDev_StructInit> : I2C Device Structure set to Default Value"); 
   
-  return I2C_PASS;
+  return RT_EOK;
 }
 
 /**
   * @brief  Allows to send a data or a buffer of data through the peripheral to 
   *         a selected device in a selected location address.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL.
+  * @retval RT_EOK or RT_ERROR.
   */
 uint32_t I2C_Write(i2c_dev_t* i2c_dev)
 {      
@@ -392,21 +392,21 @@ uint32_t I2C_Write(i2c_dev_t* i2c_dev)
   {
     I2C_LOG("\n\rERROR : I2C Device Busy"); 
     
-    return I2C_FAIL;
+    return RT_ERROR;
   }  
   /* If State is I2C_STATE_DISABLED (device is not initialized) Exit Write function */  
   else if (i2c_dev->state == I2C_STATE_DISABLED)  
   {
     I2C_LOG("\n\rERROR : I2C Device Not Initialized"); 
     
-    return I2C_FAIL;
+    return RT_ERROR;
   }  
   /* If State is I2C_STATE_ERROR (Error occurred ) */
   else if (i2c_dev->state == I2C_STATE_ERROR)
   {
     I2C_LOG("\n\rERROR : I2C Device Error"); 
     
-    return I2C_FAIL;
+    return RT_ERROR;
   }  
   /* If State is I2C_STATE_READY ( Start Communication )*/
   else
@@ -450,14 +450,14 @@ uint32_t I2C_Write(i2c_dev_t* i2c_dev)
     I2C_HAL_ENABLE_EVTIT(i2c_dev->dev);
   }
   
-   return I2C_PASS;
+   return RT_EOK;
 }
 
 /**
   * @brief  Allows to receive a data or a buffer of data through the peripheral 
   *         from a selected device in a selected location address.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 uint32_t I2C_Read(i2c_dev_t* i2c_dev)
 {    
@@ -486,21 +486,21 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
   {
     I2C_LOG("\n\rERROR : I2C Device Busy"); 
     
-    return I2C_FAIL;
+    return RT_ERROR;
   }  
   /* If State is I2C_STATE_DISABLED (device is not initialized) Exit Read function */  
   else if (i2c_dev->state == I2C_STATE_DISABLED)  
   {
     I2C_LOG("\n\rERROR : I2C Device Not Initialized"); 
     
-    return I2C_FAIL;
+    return RT_ERROR;
   }  
   /* If State is I2C_STATE_ERROR (Error occurred ) */
   else if (i2c_dev->state == I2C_STATE_ERROR)
   {
     I2C_LOG("\n\rERROR : I2C Device Error"); 
     
-    return I2C_FAIL;
+    return RT_ERROR;
   }  
   /* If State is I2C_STATE_READY */
   else
@@ -634,7 +634,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
      I2C_HAL_ENABLE_EVTIT(i2c_dev->dev);
   }
   
-  return I2C_PASS;
+  return RT_EOK;
 }
 
 
@@ -644,7 +644,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
   * @brief  Wait until target device is ready for communication (This function is 
   *         used with Memory devices).           
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 uint32_t I2C_IsDeviceReady(i2c_dev_t* i2c_dev)
 { 
@@ -679,7 +679,7 @@ uint32_t I2C_IsDeviceReady(i2c_dev_t* i2c_dev)
   /* If Timeout occurred  */
   if (Timeout == 0) 
   {    
-    return I2C_FAIL;    
+    return RT_ERROR;    
   }  
   /* If ADDR flag is set */
   else
@@ -714,7 +714,7 @@ uint32_t I2C_IsDeviceReady(i2c_dev_t* i2c_dev)
    
     I2C_LOG("\n\rLOG : I2C Target device Ready");  
     
-    return I2C_PASS;
+    return RT_EOK;
   }  
 }
 
@@ -725,7 +725,7 @@ uint32_t I2C_IsDeviceReady(i2c_dev_t* i2c_dev)
   * @brief  This function handles I2C interrupt request for preparing communication
   *         and for transfer phase in case of using Interrupt Programming Model.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS. 
+  * @retval RT_EOK. 
   */
 uint32_t I2C_EV_IRQHandler(i2c_dev_t* i2c_dev)
 {     
@@ -774,7 +774,7 @@ uint32_t I2C_EV_IRQHandler(i2c_dev_t* i2c_dev)
     }      
  #endif /* I2C_IT_PROGMODEL || I2C_DMA_1BYTE_CASE */
 
-  return I2C_PASS;
+  return RT_EOK;
 }
 
 
@@ -783,7 +783,7 @@ uint32_t I2C_EV_IRQHandler(i2c_dev_t* i2c_dev)
   *         in order to recover the correct communication status or call specific 
   *         user functions.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS. 
+  * @retval RT_EOK. 
   */
 uint32_t I2C_ER_IRQHandler(i2c_dev_t* i2c_dev)
 {  
@@ -868,7 +868,7 @@ uint32_t I2C_ER_IRQHandler(i2c_dev_t* i2c_dev)
     I2C_ERR_UserCallback(i2c_dev, i2c_dev->error);
 #endif /* USE_SINGLE_ERROR_CALLBACK */
   
-  return I2C_PASS;
+  return RT_EOK;
 }
 
 
@@ -877,7 +877,7 @@ uint32_t I2C_ER_IRQHandler(i2c_dev_t* i2c_dev)
   * @brief  Handle I2C DMA TX interrupt request when DMA programming Model is 
   *         used for data transmission. 
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS. 
+  * @retval RT_EOK. 
   */
 uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
 {
@@ -957,7 +957,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
    /* Clear DMA Interrupt Flag */
     I2C_HAL_CLEAR_DMATX_IT(i2c_dev->dev);
   
-  return I2C_PASS;
+  return RT_EOK;
 }
 
 
@@ -965,7 +965,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
   * @brief  Handle I2C DMA RX interrupt request when DMA programming Model is 
   *         used for data reception.  
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS. 
+  * @retval RT_EOK. 
   */
 uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
 {
@@ -1046,19 +1046,17 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
   /* Clear DMA Interrupt Flag */
   I2C_HAL_CLEAR_DMARX_IT(i2c_dev->dev);
   
-  return I2C_PASS;
+  return RT_EOK;
 }
 #endif /* I2C_DMA_PROGMODEL */
 
 
-/*================== I2C_Timeout_Function ==================*/
-
 /**
   * @brief  This function Manages I2C Timeouts when waiting for specific events.
   * @param  None
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
-void I2C_TIMEOUT_Manager1(void)
+void i2c_timeout(void)
 {
       /* If Timeout occurred  */
       if (i2c1_dev.timeout == I2C_TIMEOUT_DETECTED)
@@ -1093,7 +1091,7 @@ void I2C_TIMEOUT_Manager1(void)
 /**
   * @brief  This function Manages I2C Timeouts when Timeout occurred.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 uint32_t I2C_Timeout (i2c_dev_t* i2c_dev)
 {
@@ -1116,7 +1114,7 @@ uint32_t I2C_Timeout (i2c_dev_t* i2c_dev)
 /**
   * @brief  Handles Master Start condition (SB) interrupt event.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 static uint32_t I2C_MASTER_START_Handle(i2c_dev_t* i2c_dev)
 {
@@ -1201,14 +1199,14 @@ static uint32_t I2C_MASTER_START_Handle(i2c_dev_t* i2c_dev)
   }   
  #endif /* I2C_10BIT_ADDR_MODE */
    
-  return I2C_PASS;
+  return RT_EOK;
 }
 
 
 /**
   * @brief  Handles Master address matched (ADDR) interrupt event. 
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 static uint32_t I2C_MASTER_ADDR_Handle(i2c_dev_t* i2c_dev)
 {     
@@ -1357,7 +1355,7 @@ static uint32_t I2C_MASTER_ADDR_Handle(i2c_dev_t* i2c_dev)
         I2C_Enable_DMA_IT(i2c_dev, I2C_DIRECTION_TXRX);   
       }      
   }
-  return I2C_PASS;
+  return RT_EOK;
 }
 
 
@@ -1365,7 +1363,7 @@ static uint32_t I2C_MASTER_ADDR_Handle(i2c_dev_t* i2c_dev)
 /**
   * @brief  Handles Master 10bit address matched (ADD10) interrupt event.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 static uint32_t I2C_MASTER_ADD10_Handle(I2CDev_InitTypeDef* i2c_dev)
 { 
@@ -1395,7 +1393,7 @@ static uint32_t I2C_MASTER_ADD10_Handle(I2CDev_InitTypeDef* i2c_dev)
   /* Initialize Timeout value */
   i2c_dev->timeout = I2C_TIMEOUT_MIN + I2C_TIMEOUT_ADDR; 
   
-  return I2C_PASS;
+  return RT_EOK;
 }
  #endif /* I2C_10BIT_ADDR_MODE */
 
@@ -1404,7 +1402,7 @@ static uint32_t I2C_MASTER_ADD10_Handle(I2CDev_InitTypeDef* i2c_dev)
 /**
   * @brief  Handles Master transmission (TXE) interrupt event.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 static uint32_t I2C_MASTER_TXE_Handle(I2CDev_InitTypeDef* i2c_dev)
 { 
@@ -1476,7 +1474,7 @@ static uint32_t I2C_MASTER_TXE_Handle(I2CDev_InitTypeDef* i2c_dev)
     }        
   }
   
-  return I2C_PASS;
+  return RT_EOK;
 }
  #endif /* I2C_IT_PROGMODEL */
 
@@ -1484,7 +1482,7 @@ static uint32_t I2C_MASTER_TXE_Handle(I2CDev_InitTypeDef* i2c_dev)
 /**
   * @brief  Handles Master reception (RXNE flag) interrupt event.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
 {  
@@ -1649,7 +1647,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
       I2C_RXTC_UserCallback(i2c_dev);
     }
   }  
-  return I2C_PASS;
+  return RT_EOK;
 }
  #endif /* I2C_IT_PROGMODEL || I2C_DMA_1BYTE_CASE */
 
@@ -1660,7 +1658,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
   * @brief  This function Configure I2C DMA and Interrupts before starting transfer phase.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
   * @param  Direction : Transfer direction.
-  * @retval I2C_PASS or I2C_FAIL. 
+  * @retval RT_EOK or RT_ERROR. 
   */
 uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction)
 {
@@ -1679,7 +1677,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction)
     
     I2C_LOG("\n\rLOG : I2C Device BUFF IT Enabled"); 
     
-    return I2C_PASS;
+    return RT_EOK;
 #endif /* I2C_IT_PROGMODEL || I2C_DMA_1BYTE_CASE */
     
 #ifdef I2C_DMA_PROGMODEL
@@ -1724,7 +1722,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction)
       I2C_HAL_ENABLE_DMARX(i2c_dev->dev);                  
     }
     
-    return I2C_PASS; 
+    return RT_EOK; 
 #endif /* I2C_DMA_PROGMODEL */
     
     /*----------------------------------------------------------------------------
@@ -1738,7 +1736,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction)
     I2C_LOG("\n\rERROR : I2C Device Error"); 
     
     /* exit function */
-    return I2C_FAIL;
+    return RT_ERROR;
   }  
 }
 
