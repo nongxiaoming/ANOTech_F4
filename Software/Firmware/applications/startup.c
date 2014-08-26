@@ -28,17 +28,7 @@
 
 extern int  rt_application_init(void);
 
-#ifdef __CC_ARM
-extern int Image$$RW_SRAM$$ZI$$Limit;
-#define HEAP_BEGIN    (&Image$$RW_SRAM$$ZI$$Limit)
-#elif __ICCARM__
-#error IAR not support yet.
-#else
-extern int __sram_available;
-#define HEAP_BEGIN    (&__sram_available)
-#endif
 
-#define HEAP_END        STM32_SRAM_END
 
 /*******************************************************************************
 * Function Name  : assert_failed
@@ -63,32 +53,34 @@ void assert_failed(u8* file, u32 line)
  */
 void rtthread_startup(void)
 {
-	/* initialize board */
-	rt_hw_board_init();
+	 /* initialize board */
+    rt_hw_board_init();
 
-	/* show version */
-	rt_show_version();
+    /* show version */
+    rt_show_version();
 
 #ifdef RT_USING_HEAP
-    rt_system_heap_init((void*)HEAP_BEGIN, (void*)HEAP_END);
+    rt_system_heap_init((void *)HEAP_BEGIN, (void *)HEAP_END);
 #endif
 
-	/* initialize scheduler system */
-	rt_system_scheduler_init();
-
-	/* initialize application */
-	rt_application_init();
+    /* initialize scheduler system */
+    rt_system_scheduler_init();
+    /* initialize system timer*/
+    rt_system_timer_init();
+    /* initialize application */
+    rt_application_init();
 
     /* initialize timer thread */
     rt_system_timer_thread_init();
-	/* initialize idle thread */
-	rt_thread_idle_init();
 
-	/* start scheduler */
-	rt_system_scheduler_start();
+    /* initialize idle thread */
+    rt_thread_idle_init();
 
-	/* never reach here */
-	return ;
+    /* start scheduler */
+    rt_system_scheduler_start();
+
+    /* never reach here */
+    return ;
 }
 
 int main(void)

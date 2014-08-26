@@ -40,7 +40,7 @@ static void thread_entry(void* parameter)
 #endif
 
 
-
+  mpu6050_thread_init();
 
 #ifdef RT_USING_FINSH
 		finsh_system_init();

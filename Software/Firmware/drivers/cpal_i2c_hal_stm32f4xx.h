@@ -138,9 +138,6 @@ extern "C" {
 #define I2C_IT_DMARX_PREPRIO           I2C_IT_OFFSET_PREPRIO + 1   /* I2C DMA RX PREEMPTION PRIORITY */
 
 
-  
-/* This define set the number of I2C devices that can be used with this product family */
-#define I2C_DEV_NUM     3   
 
 /* This define is used to enable DMA Channel */
 #define DMA_CR_EN                       ((uint32_t)0x00000001)
@@ -205,64 +202,64 @@ extern "C" {
  #define I2C1_DMA_RX_TE_FLAG        DMA_FLAG_TEIF0     
    
  
-/*========= I2C2 specific defines (Clocks and DMA) =========*/   
-  
-#define I2C2_CLK                   RCC_APB1Periph_I2C2
-#define I2C2_DR                    ((uint32_t)0x40005810)
-#define I2C2_AF                    GPIO_AF_I2C2  
-  
-#define I2C2_DMA                   DMA1
-#define I2C2_DMA_CLK               RCC_AHB1Periph_DMA1 
-#define I2C2_DMA_CHANNEL           DMA_Channel_7  
-  
-#define I2C2_IT_EVT_IRQn           I2C2_EV_IRQn  
-#define I2C2_IT_ERR_IRQn           I2C2_ER_IRQn   
+///*========= I2C2 specific defines (Clocks and DMA) =========*/   
+//  
+//#define I2C2_CLK                   RCC_APB1Periph_I2C2
+//#define I2C2_DR                    ((uint32_t)0x40005810)
+//#define I2C2_AF                    GPIO_AF_I2C2  
+//  
+//#define I2C2_DMA                   DMA1
+//#define I2C2_DMA_CLK               RCC_AHB1Periph_DMA1 
+//#define I2C2_DMA_CHANNEL           DMA_Channel_7  
+//  
+//#define I2C2_IT_EVT_IRQn           I2C2_EV_IRQn  
+//#define I2C2_IT_ERR_IRQn           I2C2_ER_IRQn   
 
-/* TX Direction */
-#define I2C2_DMA_TX_Stream         DMA1_Stream7
-#define I2C2_DMA_TX_IRQn           DMA1_Stream7_IRQn
-#define I2C2_DMA_TX_IRQHandler     DMA1_Stream7_IRQHandler
-#define I2C2_DMA_TX_TC_FLAG        DMA_FLAG_TCIF7
-#define I2C2_DMA_TX_HT_FLAG        DMA_FLAG_HTIF7
-#define I2C2_DMA_TX_TE_FLAG        DMA_FLAG_TEIF7  
-  
+///* TX Direction */
+//#define I2C2_DMA_TX_Stream         DMA1_Stream7
+//#define I2C2_DMA_TX_IRQn           DMA1_Stream7_IRQn
+//#define I2C2_DMA_TX_IRQHandler     DMA1_Stream7_IRQHandler
+//#define I2C2_DMA_TX_TC_FLAG        DMA_FLAG_TCIF7
+//#define I2C2_DMA_TX_HT_FLAG        DMA_FLAG_HTIF7
+//#define I2C2_DMA_TX_TE_FLAG        DMA_FLAG_TEIF7  
+//  
 
- #define I2C2_DMA_RX_Stream         DMA1_Stream3
- #define I2C2_DMA_RX_IRQn           DMA1_Stream3_IRQn
- #define I2C2_DMA_RX_IRQHandler     DMA1_Stream3_IRQHandler
- #define I2C2_DMA_RX_TC_FLAG        DMA_FLAG_TCIF3
- #define I2C2_DMA_RX_HT_FLAG        DMA_FLAG_HTIF3
- #define I2C2_DMA_RX_TE_FLAG        DMA_FLAG_TEIF3
+// #define I2C2_DMA_RX_Stream         DMA1_Stream3
+// #define I2C2_DMA_RX_IRQn           DMA1_Stream3_IRQn
+// #define I2C2_DMA_RX_IRQHandler     DMA1_Stream3_IRQHandler
+// #define I2C2_DMA_RX_TC_FLAG        DMA_FLAG_TCIF3
+// #define I2C2_DMA_RX_HT_FLAG        DMA_FLAG_HTIF3
+// #define I2C2_DMA_RX_TE_FLAG        DMA_FLAG_TEIF3
 
-   
-/*========= I2C3 specific defines (Clocks and DMA) =========*/   
-  
-#define I2C3_CLK                   RCC_APB1Periph_I2C3
-#define I2C3_DR                    ((uint32_t)0x40005C10)
-#define I2C3_AF                    GPIO_AF_I2C3  
-  
-#define I2C3_DMA                   DMA1
-#define I2C3_DMA_CLK               RCC_AHB1Periph_DMA1 
-#define I2C3_DMA_CHANNEL           DMA_Channel_3  
-    
-#define I2C3_IT_EVT_IRQn           I2C3_EV_IRQn  
-#define I2C3_IT_ERR_IRQn           I2C3_ER_IRQn   
+//   
+///*========= I2C3 specific defines (Clocks and DMA) =========*/   
+//  
+//#define I2C3_CLK                   RCC_APB1Periph_I2C3
+//#define I2C3_DR                    ((uint32_t)0x40005C10)
+//#define I2C3_AF                    GPIO_AF_I2C3  
+//  
+//#define I2C3_DMA                   DMA1
+//#define I2C3_DMA_CLK               RCC_AHB1Periph_DMA1 
+//#define I2C3_DMA_CHANNEL           DMA_Channel_3  
+//    
+//#define I2C3_IT_EVT_IRQn           I2C3_EV_IRQn  
+//#define I2C3_IT_ERR_IRQn           I2C3_ER_IRQn   
 
-/* TX Direction */
-#define I2C3_DMA_TX_Stream         DMA1_Stream4
-#define I2C3_DMA_TX_IRQn           DMA1_Stream4_IRQn
-#define I2C3_DMA_TX_IRQHandler     DMA1_Stream4_IRQHandler
-#define I2C3_DMA_TX_TC_FLAG        DMA_FLAG_TCIF4
-#define I2C3_DMA_TX_HT_FLAG        DMA_FLAG_HTIF4
-#define I2C3_DMA_TX_TE_FLAG        DMA_FLAG_TEIF4  
-  
-/* RX Direction */
-#define I2C3_DMA_RX_Stream         DMA1_Stream2
-#define I2C3_DMA_RX_IRQn           DMA1_Stream2_IRQn
-#define I2C3_DMA_RX_IRQHandler     DMA1_Stream2_IRQHandler
-#define I2C3_DMA_RX_TC_FLAG        DMA_FLAG_TCIF2
-#define I2C3_DMA_RX_HT_FLAG        DMA_FLAG_HTIF2
-#define I2C3_DMA_RX_TE_FLAG        DMA_FLAG_TEIF2 
+///* TX Direction */
+//#define I2C3_DMA_TX_Stream         DMA1_Stream4
+//#define I2C3_DMA_TX_IRQn           DMA1_Stream4_IRQn
+//#define I2C3_DMA_TX_IRQHandler     DMA1_Stream4_IRQHandler
+//#define I2C3_DMA_TX_TC_FLAG        DMA_FLAG_TCIF4
+//#define I2C3_DMA_TX_HT_FLAG        DMA_FLAG_HTIF4
+//#define I2C3_DMA_TX_TE_FLAG        DMA_FLAG_TEIF4  
+//  
+///* RX Direction */
+//#define I2C3_DMA_RX_Stream         DMA1_Stream2
+//#define I2C3_DMA_RX_IRQn           DMA1_Stream2_IRQn
+//#define I2C3_DMA_RX_IRQHandler     DMA1_Stream2_IRQHandler
+//#define I2C3_DMA_RX_TC_FLAG        DMA_FLAG_TCIF2
+//#define I2C3_DMA_RX_HT_FLAG        DMA_FLAG_HTIF2
+//#define I2C3_DMA_RX_TE_FLAG        DMA_FLAG_TEIF2 
   
 
 /*========= Peripheral Clock Command =========*/
@@ -401,40 +398,17 @@ extern "C" {
   
 /*========= I2CX IRQHandler =========*/      
 
-#ifdef USE_I2C1
    uint32_t I2C1_EV_IRQHandler(void); /*<!I2C1 Event Interrupt Handler : handle Communication of I2C1 Device */
    uint32_t I2C1_ER_IRQHandler(void); /*<!I2C1 Error Interrupt Handler : handle error of I2C1 Device if Error Interrupt enabled */
-#endif /* USE_I2C1 */
-   
-#ifdef USE_I2C2
-   uint32_t I2C2_EV_IRQHandler(void); /*<!I2C2 Event Interrupt Handler  : handle Communication of I2C2 Device */
-   uint32_t I2C2_ER_IRQHandler(void); /*<!I2C2 Error Interrupt Handler  : handle error of I2C2 Device if Error Interrupt enabled */
-#endif /* USE_I2C2 */
 
-#ifdef USE_I2C3
-   uint32_t I2C3_EV_IRQHandler(void); /*<!I2C3 Event Interrupt Handler  : handle Communication of I2C3 Device */
-   uint32_t I2C3_ER_IRQHandler(void); /*<!I2C3 Error Interrupt Handler  : handle error of I2C3 Device if Error Interrupt enabled */
-#endif /* USE_I2C3 */
    
 #ifdef I2C_DMA_PROGMODEL   
 
 /*========= DMA I2CX IRQHandler =========*/      
 
-#ifdef USE_I2C1
    uint32_t I2C1_DMA_TX_IRQHandler(void); /*<!I2C1 DMA TX Interrupt Handler : handle data Transmission with DMA */
    uint32_t I2C1_DMA_RX_IRQHandler(void); /*<!I2C1 DMA RX Interrupt Handler : handle data reception with DMA */
-#endif /* USE_I2C1 */
 
-#ifdef USE_I2C2
-   uint32_t I2C2_DMA_TX_IRQHandler(void); /*<!I2C2 DMA TX Interrupt Handler : handle data Transmission with DMA */
-   uint32_t I2C2_DMA_RX_IRQHandler(void); /*<!I2C2 DMA RX Interrupt Handler : handle data reception with DMA */
-#endif /* USE_I2C2 */
-   
-#ifdef USE_I2C3
-   uint32_t I2C3_DMA_TX_IRQHandler(void); /*<!I2C3 DMA TX Interrupt Handler : handle data Transmission with DMA */
-   uint32_t I2C3_DMA_RX_IRQHandler(void); /*<!I2C3 DMA RX Interrupt Handler : handle data reception with DMA */
-#endif /* USE_I2C3 */
-   
 #endif /* I2C_DMA_PROGMODEL */   
 
 /*========= Hardware Abstraction Layer local =========*/      

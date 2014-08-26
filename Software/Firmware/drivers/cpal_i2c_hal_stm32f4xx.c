@@ -27,11 +27,11 @@ i2c_dev_t i2c1_dev = { I2C1_Dev,                          /* I2C1 device number 
 
 DMA_InitTypeDef I2C_DMA_InitStructure;
 
-I2C_TypeDef* I2C_DEVICE[3] = {I2C1, I2C2, I2C3};
+I2C_TypeDef* I2C_DEVICE[1] = {I2C1};
 
-const uint32_t I2C_CLK[3] = {I2C1_CLK, I2C2_CLK, I2C3_CLK};
-const uint32_t I2C_DR[3] = {I2C1_DR, I2C2_DR, I2C3_DR};
-const uint32_t I2C_AF[3] = {I2C1_AF, I2C2_AF, I2C3_AF};
+const uint32_t I2C_CLK[1] = {I2C1_CLK};
+const uint32_t I2C_DR[1] = {I2C1_DR};
+const uint32_t I2C_AF[1] = {I2C1_AF};
 
 const GPIO_TypeDef* I2C_SCL_GPIO_PORT[3] = {I2C1_SCL_GPIO_PORT, I2C2_SCL_GPIO_PORT, I2C3_SCL_GPIO_PORT};
 const uint16_t I2C_SCL_GPIO_PIN[3] = {I2C1_SCL_GPIO_PIN, I2C2_SCL_GPIO_PIN, I2C3_SCL_GPIO_PIN};
@@ -43,28 +43,28 @@ const uint16_t I2C_SDA_GPIO_PIN[3] = {I2C1_SDA_GPIO_PIN,I2C2_SDA_GPIO_PIN,I2C3_S
 const uint32_t I2C_SDA_GPIO_CLK[3] = {I2C1_SDA_GPIO_CLK,I2C2_SDA_GPIO_CLK,I2C3_SDA_GPIO_CLK};
 const uint16_t I2C_SDA_GPIO_PINSOURCE[3] = {I2C1_SDA_GPIO_PINSOURCE,I2C2_SDA_GPIO_PINSOURCE,I2C3_SDA_GPIO_PINSOURCE};
 
-const uint32_t I2C_DMA_CLK[3] = {I2C1_DMA_CLK, I2C2_DMA_CLK, I2C3_DMA_CLK};
-const uint32_t I2C_DMA_CHANNEL[3] = {I2C1_DMA_CHANNEL, I2C2_DMA_CHANNEL, I2C3_DMA_CHANNEL};
+const uint32_t I2C_DMA_CLK[1] = {I2C1_DMA_CLK};
+const uint32_t I2C_DMA_CHANNEL[1] = {I2C1_DMA_CHANNEL};
 
-DMA_Stream_TypeDef* I2C_DMA_TX_Stream[3] = {I2C1_DMA_TX_Stream, I2C2_DMA_TX_Stream, I2C3_DMA_TX_Stream};
-DMA_Stream_TypeDef* I2C_DMA_RX_Stream[3] = {I2C1_DMA_RX_Stream, I2C2_DMA_RX_Stream, I2C3_DMA_RX_Stream};
+DMA_Stream_TypeDef* I2C_DMA_TX_Stream[1] = {I2C1_DMA_TX_Stream};
+DMA_Stream_TypeDef* I2C_DMA_RX_Stream[1] = {I2C1_DMA_RX_Stream};
 
-const IRQn_Type I2C_DMA_TX_IRQn[3] = {I2C1_DMA_TX_IRQn, I2C2_DMA_TX_IRQn, I2C3_DMA_TX_IRQn};
-const IRQn_Type I2C_DMA_RX_IRQn[3] = {I2C1_DMA_RX_IRQn, I2C2_DMA_RX_IRQn, I2C3_DMA_RX_IRQn};
+const IRQn_Type I2C_DMA_TX_IRQn[1] = {I2C1_DMA_TX_IRQn};
+const IRQn_Type I2C_DMA_RX_IRQn[1] = {I2C1_DMA_RX_IRQn};
 
-const IRQn_Type I2C_IT_EVT_IRQn[3] = {I2C1_IT_EVT_IRQn, I2C2_IT_EVT_IRQn, I2C3_IT_EVT_IRQn};
-const IRQn_Type I2C_IT_ERR_IRQn [3] = {I2C1_IT_ERR_IRQn, I2C2_IT_ERR_IRQn, I2C3_IT_ERR_IRQn};
+const IRQn_Type I2C_IT_EVT_IRQn[1] = {I2C1_IT_EVT_IRQn};
+const IRQn_Type I2C_IT_ERR_IRQn [1] = {I2C1_IT_ERR_IRQn};
 
 
-DMA_TypeDef* I2C_DMA[3] = {I2C1_DMA, I2C2_DMA, I2C3_DMA}; 
+DMA_TypeDef* I2C_DMA[1] = {I2C1_DMA}; 
 
-const uint32_t I2C_DMA_TX_TC_FLAG[3] = {I2C1_DMA_TX_TC_FLAG, I2C2_DMA_TX_TC_FLAG, I2C3_DMA_TX_TC_FLAG};
-const uint32_t I2C_DMA_TX_HT_FLAG[3] = {I2C1_DMA_TX_HT_FLAG, I2C2_DMA_TX_HT_FLAG, I2C3_DMA_TX_HT_FLAG};
-const uint32_t I2C_DMA_TX_TE_FLAG[3] = {I2C1_DMA_TX_TE_FLAG, I2C2_DMA_TX_TE_FLAG, I2C3_DMA_TX_TE_FLAG};
+const uint32_t I2C_DMA_TX_TC_FLAG[1] = {I2C1_DMA_TX_TC_FLAG};
+const uint32_t I2C_DMA_TX_HT_FLAG[1] = {I2C1_DMA_TX_HT_FLAG};
+const uint32_t I2C_DMA_TX_TE_FLAG[1] = {I2C1_DMA_TX_TE_FLAG};
 
-const uint32_t I2C_DMA_RX_TC_FLAG[3] = {I2C1_DMA_RX_TC_FLAG, I2C2_DMA_RX_TC_FLAG, I2C3_DMA_RX_TC_FLAG};
-const uint32_t I2C_DMA_RX_HT_FLAG[3] = {I2C1_DMA_RX_HT_FLAG, I2C2_DMA_RX_HT_FLAG, I2C3_DMA_RX_HT_FLAG};
-const uint32_t I2C_DMA_RX_TE_FLAG[3] = {I2C1_DMA_RX_TE_FLAG, I2C2_DMA_RX_TE_FLAG, I2C3_DMA_RX_TE_FLAG};
+const uint32_t I2C_DMA_RX_TC_FLAG[1] = {I2C1_DMA_RX_TC_FLAG};
+const uint32_t I2C_DMA_RX_HT_FLAG[1] = {I2C1_DMA_RX_HT_FLAG};
+const uint32_t I2C_DMA_RX_TE_FLAG[1] = {I2C1_DMA_RX_TE_FLAG};
 
 
 /*================== CPAL_I2C_HAL_Config ==================*/
@@ -478,7 +478,6 @@ void I2C_HAL_ITDeInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionType
 
 /*================== CPAL_I2C1_IRQhandler ==================*/
 
-#ifdef USE_I2C1
 
 /**
   * @brief  This function handles I2C1 interrupt request.
@@ -531,7 +530,6 @@ uint32_t I2C1_DMA_RX_IRQHandler(void)
   return I2C_DMA_RX_IRQHandler(&i2c1_dev);
 }
  #endif /* I2C_DMA_PROGMODEL */
-#endif /* USE_I2C1 */
 
 
 

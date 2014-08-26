@@ -4,7 +4,7 @@
 // <RDTConfigurator URL="http://www.rt-thread.com/eclipse">
 
 // <integer name="RT_NAME_MAX" description="Maximal size of kernel object name length" default="6" />
-#define RT_NAME_MAX    6
+#define RT_NAME_MAX    8
 // <integer name="RT_ALIGN_SIZE" description="Alignment size for CPU architecture data access" default="4" />
 #define RT_ALIGN_SIZE    4
 // <integer name="RT_THREAD_PRIORITY_MAX" description="Maximal level of thread priority" default="2">
@@ -119,7 +119,7 @@
 // <item name="UART0">"uart0"</item>
 // <item name="UART1">"uart1"</item>
 // </string>
-#define RT_CONSOLE_DEVICE_NAME "uart0"
+#define RT_CONSOLE_DEVICE_NAME "uart1"
 // </section>
 
 // <bool name="RT_USING_COMPONENTS_INIT" description="Using components manager" default="true" />

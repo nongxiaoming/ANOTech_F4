@@ -423,6 +423,31 @@ void MPU6050_Init(void)
 	//Delay_ms_mpu(50);
 }
 
+static void thread_entry(void* parameter)
+{
+short temp[7];
+uint8_t id=0;
+	MPU6050_Config();
+  while(1)
+  {
+	id=MPU6050ReadID();
+		rt_kprintf("id=0x%X\r\n",id);
+	  MPU6050ReadData(temp);
+		rt_kprintf("data:%d,%d,%d,%d,%d,%d,%d\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5],temp[6]);
+		rt_thread_delay(200);
+  }
+}
+int mpu6050_thread_init(void)
+{
+    rt_thread_t tid;
 
+    tid = rt_thread_create("mpu6050",
+                           thread_entry, RT_NULL,
+                           512, 14, 5);
 
+    if (tid != RT_NULL)
+        rt_thread_startup(tid);
+
+    return 0;
+}
 

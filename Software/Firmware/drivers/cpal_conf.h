@@ -4,9 +4,6 @@
 
 #include <rtthread.h>
         
-#define USE_I2C1          /*<! Uncomment to use I2C1 device */
-
-
 
 /* Enable the use of Master Mode */
 #define I2C_MASTER_MODE  
@@ -124,10 +121,10 @@ void i2c_timeout(void);
 
 
 
-//#define I2C_DEBUG
+#define I2C_DEBUG
 
 #ifdef I2C_DEBUG
-#define I2C_LOG(Str)                   printf(Str)
+#define I2C_LOG(Str)                   rt_kprintf(Str)
 #include <stdio.h>                     /* This header file must be included when using I2C_DEBUG option   */
 #else
 #define I2C_LOG(Str)                   ((void)0)
