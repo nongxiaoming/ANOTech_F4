@@ -920,7 +920,8 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
         I2C_HAL_DISABLE_DMATX(i2c_dev->dev);        
         
         /* Disable EVENT Interrupt */
-        I2C_HAL_DISABLE_EVTIT(i2c_dev->dev);   
+				i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
+   
         
         I2C_LOG("\n\rLOG : I2C Device Master TX DMA Disabled");
         
@@ -1001,7 +1002,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
         I2C_HAL_DISABLE_DMARX(i2c_dev->dev);
         
         /* Disable EVENT Interrupt */
-        I2C_HAL_DISABLE_EVTIT(i2c_dev->dev);
+			  i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
         
         /* Disable DMA automatic NACK generation */
         i2c_dev->I2C->CR2 &= ~I2C_CR2_LAST ;  
@@ -1610,7 +1611,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
       I2C_LOG("\n\rLOG : I2C Device RX Complete"); 
       
       /* Disable EVENT Interrupt */
-      I2C_HAL_DISABLE_EVTIT(i2c_dev->dev);
+			i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
       
       I2C_LOG("\n\rLOG : I2C Device RX EVT IT Disabled");
       
@@ -1687,7 +1688,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction)
     case I2C_PROGMODEL_DMA:
     
      /* Disable EVENT Interrupt */
-     I2C_HAL_DISABLE_EVTIT(i2c_dev->dev);
+     i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
     
      /* Enable DMA request */
 		i2c_dev->I2C->CR2 |= I2C_CR2_DMAEN;

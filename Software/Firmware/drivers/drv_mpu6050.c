@@ -118,7 +118,7 @@ uint8_t MPU6050_ReadReg(uint8_t RegName)
   if(I2C_Read(&MPU6050_i2c) == RT_EOK)
   {
     while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
-    { }
+    { rt_thread_delay(1); }
   }
   
   /* Store MPU6050_I2C received data */
@@ -156,7 +156,7 @@ uint8_t MPU6050_WriteReg(uint8_t RegName, uint8_t RegValue)
   if(I2C_Write(&MPU6050_i2c) == RT_EOK)
   {
     while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
-    { }
+    { rt_thread_delay(1); }
     
     if (MPU6050_i2c.state == I2C_STATE_ERROR)
     {
@@ -315,8 +315,7 @@ int16_t MPU6050_ReadTemp(void)
 
 uint8_t MPU6050ReadID(void)
 {
-	uint8_t ret = 0;
-  
+
   MPU6050_Buffer[0] = 0;
   MPU6050_Buffer[1] = 0;
   
@@ -334,13 +333,11 @@ uint8_t MPU6050ReadID(void)
   if(I2C_Read(&MPU6050_i2c) == RT_EOK)
   {
     while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
-    { }
+    { rt_thread_delay(1);}
   }
+
   
-  /* Store MPU6050_I2C received data */
-  ret = MPU6050_Buffer[0] ;
-    
-    return ret;
+    return MPU6050_Buffer[0] ;
 }
 void MPU6050ReadData(short *Data)
 {
@@ -405,7 +402,7 @@ void MPU6050_Init(void)
 	while(id!=0x68)
 		{
 			id=MPU6050ReadID();
-			printf("MPU6050 ID:%x",id);
+			rt_kprintf("MPU6050 ID:%x",id);
 		}
 	MPU6050_setSleepEnabled(0); //进入工作状态
 	//Delay_ms_mpu(200);
@@ -434,7 +431,7 @@ uint8_t id=0;
 		rt_kprintf("id=0x%X\r\n",id);
 	  MPU6050ReadData(temp);
 		rt_kprintf("data:%d,%d,%d,%d,%d,%d,%d\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5],temp[6]);
-		rt_thread_delay(200);
+		rt_thread_delay(100);
   }
 }
 int mpu6050_thread_init(void)

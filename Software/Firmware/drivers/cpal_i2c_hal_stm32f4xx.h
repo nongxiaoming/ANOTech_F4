@@ -357,8 +357,6 @@ extern "C" {
 #define I2C_HAL_DISABLE_ERRIT(device)     I2C_DEVICE[(device)]->CR2 &= ~I2C_CR2_ITERREN   
   
 #define I2C_HAL_ENABLE_EVTIT(device)      I2C_DEVICE[(device)]->CR2 |= I2C_CR2_ITEVTEN   
-   
-#define I2C_HAL_DISABLE_EVTIT(device)     I2C_DEVICE[(device)]->CR2 &= ~I2C_CR2_ITEVTEN 
   
 #define I2C_HAL_ENABLE_BUFIT(device)      I2C_DEVICE[(device)]->CR2 |= I2C_CR2_ITBUFEN   
    

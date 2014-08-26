@@ -121,7 +121,7 @@ void i2c_timeout(void);
 
 
 
-#define I2C_DEBUG
+//#define I2C_DEBUG
 
 #ifdef I2C_DEBUG
 #define I2C_LOG(Str)                   rt_kprintf(Str)
