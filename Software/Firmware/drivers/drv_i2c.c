@@ -128,7 +128,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     /* Deinitialize DMA Channels */
     if (i2c_dev->mode == I2C_PROGMODEL_DMA)
     {
-      I2C_HAL_DMADeInit(i2c_dev->dev, i2c_dev->direction);
+      I2C_HAL_DMADeInit(i2c_dev);
       
       I2C_LOG("\n\rLOG : I2C Device DMA Deinit");  
     } 
@@ -202,7 +202,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     if (i2c_dev->mode == I2C_PROGMODEL_DMA) 
     {
       /* Initialize I2Cx DMA Channels */
-      I2C_HAL_DMAInit(i2c_dev->dev, i2c_dev->direction, i2c_dev->options);
+      I2C_HAL_DMAInit(i2c_dev);
       
       I2C_LOG("\n\rLOG : I2C Device DMA Init");  
     }
@@ -212,7 +212,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     Peripheral and DMA interrupts Initialization
     ---------------------------------------------------------------------------*/
     /* Initialize I2Cx Interrupts */
-    I2C_HAL_ITInit(i2c_dev->dev, i2c_dev->options, i2c_dev->direction, i2c_dev->mode);
+    I2C_HAL_ITInit(i2c_dev);
     
     I2C_LOG("\n\rLOG : I2C Device IT Init");
     
@@ -292,7 +292,7 @@ uint32_t I2CDev_DeInit(i2c_dev_t* i2c_dev)
     ---------------------------------------------------------------------------*/   
     if (i2c_dev->mode == I2C_PROGMODEL_DMA)
     {
-      I2C_HAL_DMADeInit(i2c_dev->dev, i2c_dev->direction);
+      I2C_HAL_DMADeInit(i2c_dev);
       
       I2C_LOG("\n\rLOG : I2C Device DMA Deinit");  
     } 
@@ -301,7 +301,7 @@ uint32_t I2CDev_DeInit(i2c_dev_t* i2c_dev)
     /*----------------------------------------------------------------------------
     Interrupts Deinitialization
     ---------------------------------------------------------------------------*/
-    I2C_HAL_ITDeInit(i2c_dev->dev, i2c_dev->options, i2c_dev->direction, i2c_dev->mode);
+    I2C_HAL_ITDeInit(i2c_dev);
     
     I2C_LOG("\n\rLOG : I2C Device IT Deinit"); 
     

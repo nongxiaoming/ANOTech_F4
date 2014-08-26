@@ -179,13 +179,13 @@ void I2C_HAL_GPIODeInit(I2C_DevTypeDef Device)
   * @param  Options :  Transfer Options.
   * @retval None. 
   */             
-void I2C_HAL_DMAInit(I2C_DevTypeDef Device, I2C_DirectionTypeDef Direction, uint32_t Options)
+void I2C_HAL_DMAInit(i2c_dev_t* i2c_dev)
 {  
   /* Enable I2Cx DMA */
-  DMA_CLK_CMD(I2C_DMA_CLK[Device], ENABLE);
+  DMA_CLK_CMD(I2C_DMA_CLK[i2c_dev->dev], ENABLE);
   
   /* I2Cx Common Stream Configuration */
-  I2C_DMA_InitStructure.DMA_Channel = I2C_DMA_CHANNEL[Device];
+  I2C_DMA_InitStructure.DMA_Channel = I2C_DMA_CHANNEL[i2c_dev->dev];
   I2C_DMA_InitStructure.DMA_Memory0BaseAddr = 0;
   I2C_DMA_InitStructure.DMA_BufferSize = 0;
   I2C_DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
@@ -200,26 +200,26 @@ void I2C_HAL_DMAInit(I2C_DevTypeDef Device, I2C_DirectionTypeDef Direction, uint
   I2C_DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
   
   /* Select I2Cx DR Address register as DMA PeripheralBaseAddress */
-  I2C_DMA_InitStructure.DMA_PeripheralBaseAddr = I2C_DR [Device];
+  I2C_DMA_InitStructure.DMA_PeripheralBaseAddr = I2C_DR [i2c_dev->dev];
   
   /* If TX Direction (Transmission) selected */
-  if ((Direction & I2C_DIRECTION_TX) != 0)
+  if ((i2c_dev->direction & I2C_DIRECTION_TX) != 0)
   {         
     /* Select Memory to Peripheral transfer direction */
     I2C_DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
     
     /* Initialize I2Cx DMA Tx Stream */
-    DMA_Init((DMA_Stream_TypeDef*)I2C_DMA_TX_Stream[Device], &I2C_DMA_InitStructure);   
+    DMA_Init((DMA_Stream_TypeDef*)I2C_DMA_TX_Stream[i2c_dev->dev], &I2C_DMA_InitStructure);   
   }
   
   /* If RX Direction (Reception) selected */
-  if ((Direction & I2C_DIRECTION_RX ) != 0)
+  if ((i2c_dev->direction & I2C_DIRECTION_RX ) != 0)
   {  
     /* Select Peripheral to Memory transfer direction */
     I2C_DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
     
     /* Initialize I2Cx DMA Rx Stream */
-    DMA_Init((DMA_Stream_TypeDef*)I2C_DMA_RX_Stream[Device], &I2C_DMA_InitStructure);   
+    DMA_Init((DMA_Stream_TypeDef*)I2C_DMA_RX_Stream[i2c_dev->dev], &I2C_DMA_InitStructure);   
   }
 }
     
@@ -316,20 +316,20 @@ void I2C_HAL_DMARXConfig(i2c_dev_t* i2c_dev)
   * @param  Direction : Transfer direction.
   * @retval None. 
   */
-void I2C_HAL_DMADeInit(I2C_DevTypeDef Device, I2C_DirectionTypeDef Direction)
+void I2C_HAL_DMADeInit(i2c_dev_t* i2c_dev)
 {
   /* If TX Direction (Transmission) selected */
-  if ((Direction & I2C_DIRECTION_TX) != 0)
+  if ((i2c_dev->direction & I2C_DIRECTION_TX) != 0)
   {
     /* Deinitialize I2Cx DMA Tx Stream */
-    DMA_DeInit((DMA_Stream_TypeDef*)I2C_DMA_TX_Stream[Device]);  
+    DMA_DeInit((DMA_Stream_TypeDef*)I2C_DMA_TX_Stream[i2c_dev->dev]);  
   }
   
   /* If RX Direction (Reception) selected */
-  if ((Direction & I2C_DIRECTION_RX) != 0)
+  if ((i2c_dev->direction & I2C_DIRECTION_RX) != 0)
   {
     /* Deinitialize I2Cx DMA Rx Stream */
-    DMA_DeInit((DMA_Stream_TypeDef*)I2C_DMA_RX_Stream[Device]);  
+    DMA_DeInit((DMA_Stream_TypeDef*)I2C_DMA_RX_Stream[i2c_dev->dev]);  
   }  
 }  
 #endif /* I2C_DMA_PROGMODEL */
@@ -342,7 +342,7 @@ void I2C_HAL_DMADeInit(I2C_DevTypeDef Device, I2C_DirectionTypeDef Direction)
   * @param  Options : I2C Transfer Options.
   * @retval None. 
   */
-void I2C_HAL_ITInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDef Direction, I2C_ProgModelTypeDef ProgModel)
+void I2C_HAL_ITInit(i2c_dev_t* i2c_dev)
 {
   NVIC_InitTypeDef NVIC_InitStructure; 
   
@@ -353,68 +353,68 @@ void I2C_HAL_ITInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDe
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   
   /* Configure NVIC for I2Cx EVT Interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_EVT_IRQn [Device] ;
+  NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_EVT_IRQn [i2c_dev->dev] ;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_EVT_PREPRIO;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_EVT_SUBPRIO;
   NVIC_Init(&NVIC_InitStructure);
   
   /* If I2C ERR Interrupt Option Bit not selected */ 
-  if ((Options & OPT_I2C_ERRIT_DISABLE) == 0)    
+  if ((i2c_dev->options & OPT_I2C_ERRIT_DISABLE) == 0)    
   {
     /* Configure NVIC for I2Cx ERR Interrupt */
-    NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_ERR_IRQn  [Device] ;
+    NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_ERR_IRQn  [i2c_dev->dev] ;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_ERR_PREPRIO;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_ERR_SUBPRIO;
     NVIC_Init(&NVIC_InitStructure);
     
     /* Enable I2C Error Interrupts */
-    I2C_HAL_ENABLE_ERRIT(Device);
+    i2c_dev->I2C->CR2 |= I2C_CR2_ITERREN ;
   }
   
 #ifdef I2C_DMA_PROGMODEL
-  if (ProgModel == I2C_PROGMODEL_DMA)
+  if (i2c_dev->mode == I2C_PROGMODEL_DMA)
   {
-    if ( (Direction & I2C_DIRECTION_TX) != 0)
+    if ( (i2c_dev->direction & I2C_DIRECTION_TX) != 0)
     {   
       /* Configure NVIC for DMA TX channel interrupt */
-      NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_TX_IRQn [Device] ;
+      NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_TX_IRQn [i2c_dev->dev] ;
       NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_DMATX_PREPRIO;
       NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_DMATX_SUBPRIO;
       NVIC_Init(&NVIC_InitStructure);
       
       /* Enable DMA TX Channel TCIT  */
-      I2C_HAL_ENABLE_DMATX_TCIT(Device);
+      I2C_HAL_ENABLE_DMATX_TCIT(i2c_dev->dev);
       
       /* Enable DMA TX Channel TEIT  */    
-      I2C_HAL_ENABLE_DMATX_TEIT(Device); 
+      I2C_HAL_ENABLE_DMATX_TEIT(i2c_dev->dev); 
       
       /* If DMA TX HT interrupt Option Bits Selected */
-      if ((Options & OPT_DMATX_HTIT) != 0)
+      if ((i2c_dev->options & OPT_DMATX_HTIT) != 0)
       {
         /* Enable DMA TX Channel HTIT  */    
-        I2C_HAL_ENABLE_DMATX_HTIT(Device);
+        I2C_HAL_ENABLE_DMATX_HTIT(i2c_dev->dev);
       }
     }  
-    if ((Direction & I2C_DIRECTION_RX) != 0)
+    if ((i2c_dev->direction & I2C_DIRECTION_RX) != 0)
 
     {
       /* Configure NVIC for DMA RX channel interrupt */
-      NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_RX_IRQn [Device] ;
+      NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_RX_IRQn [i2c_dev->dev] ;
       NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = I2C_IT_DMARX_PREPRIO;
       NVIC_InitStructure.NVIC_IRQChannelSubPriority = I2C_IT_DMARX_SUBPRIO;
       NVIC_Init(&NVIC_InitStructure);
       
       /* Enable DMA RX Channel TCIT  */
-      I2C_HAL_ENABLE_DMARX_TCIT(Device);  
+      I2C_HAL_ENABLE_DMARX_TCIT(i2c_dev->dev);  
       
       /* Enable DMA RX Channel TEIT  */
-      I2C_HAL_ENABLE_DMARX_TEIT(Device); 
+      I2C_HAL_ENABLE_DMARX_TEIT(i2c_dev->dev); 
       
       /* If DMA RX HT interrupt Option Bits Selected */
-      if ((Options & OPT_DMARX_HTIT) != 0)
+      if ((i2c_dev->options & OPT_DMARX_HTIT) != 0)
       {
         /* Enable DMA RX Channel HTIT  */    
-        I2C_HAL_ENABLE_DMARX_HTIT(Device);  
+        I2C_HAL_ENABLE_DMARX_HTIT(i2c_dev->dev);  
       }
     }
   }
@@ -431,7 +431,7 @@ void I2C_HAL_ITInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDe
   * @param  Options : I2C Transfer Options.
   * @retval None. 
   */
-void I2C_HAL_ITDeInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDef Direction, I2C_ProgModelTypeDef ProgModel)
+void I2C_HAL_ITDeInit(i2c_dev_t* i2c_dev)
 {
   NVIC_InitTypeDef NVIC_InitStructure; 
   
@@ -442,32 +442,32 @@ void I2C_HAL_ITDeInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionType
   NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
    
   /* Disable I2Cx EVT IRQn */
-  NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_EVT_IRQn [Device] ;
+  NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_EVT_IRQn [i2c_dev->dev] ;
   NVIC_Init(&NVIC_InitStructure);
   
   /* If I2C ERR Interrupt Option Bit Deselected */ 
-  if ((Options & OPT_I2C_ERRIT_DISABLE) == 0)    
+  if ((i2c_dev->options & OPT_I2C_ERRIT_DISABLE) == 0)    
   {
     /* Disable I2Cx ERR IRQn */ 
-    NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_ERR_IRQn  [Device] ;
+    NVIC_InitStructure.NVIC_IRQChannel = I2C_IT_ERR_IRQn  [i2c_dev->dev] ;
     NVIC_Init(&NVIC_InitStructure);
   }
   
 #ifdef I2C_DMA_PROGMODEL
-  if (ProgModel == I2C_PROGMODEL_DMA)
+  if (i2c_dev->mode == I2C_PROGMODEL_DMA)
 
   {
-    if ( (Direction & I2C_DIRECTION_TX) != 0)
+    if ( (i2c_dev->direction & I2C_DIRECTION_TX) != 0)
     {      
       /* Disable I2Cx DMA TX IRQn */
-      NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_TX_IRQn [Device] ;
+      NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_TX_IRQn [i2c_dev->dev] ;
       NVIC_Init(&NVIC_InitStructure);
     }
     
-    if ( (Direction & I2C_DIRECTION_RX) != 0)
+    if ( (i2c_dev->direction & I2C_DIRECTION_RX) != 0)
     { 
       /* Disable I2Cx DMA RX IRQn */
-      NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_RX_IRQn [Device] ;
+      NVIC_InitStructure.NVIC_IRQChannel = I2C_DMA_RX_IRQn [i2c_dev->dev] ;
       NVIC_Init(&NVIC_InitStructure);
     }  
   }

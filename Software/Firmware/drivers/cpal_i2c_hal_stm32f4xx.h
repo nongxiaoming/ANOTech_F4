@@ -352,7 +352,6 @@ extern "C" {
    
 /* I2C interrupts enable/disable */  
 
-#define I2C_HAL_ENABLE_ERRIT(device)      I2C_DEVICE[(device)]->CR2 |= I2C_CR2_ITERREN   
    
 #define I2C_HAL_DISABLE_ERRIT(device)     I2C_DEVICE[(device)]->CR2 &= ~I2C_CR2_ITERREN   
   
@@ -421,7 +420,7 @@ extern "C" {
                                                             (configured to their default state) */ 
   
 #ifdef I2C_DMA_PROGMODEL
-  void I2C_HAL_DMAInit(I2C_DevTypeDef Device, I2C_DirectionTypeDef Direction, uint32_t Options); /*<!This function enable the DMA clock and initialize 
+  void I2C_HAL_DMAInit(i2c_dev_t* i2c_dev); /*<!This function enable the DMA clock and initialize 
                                                                                                             needed DMA Streams used by the I2C device   */
   
   void I2C_HAL_DMATXConfig(i2c_dev_t* i2c_dev); /*<!This function configures the DMA Stream specific */
@@ -430,15 +429,15 @@ extern "C" {
   void I2C_HAL_DMARXConfig(i2c_dev_t* i2c_dev); /*<!This function configures the DMA Stream specific  */
                                                                                                                     
   
-  void I2C_HAL_DMADeInit(I2C_DevTypeDef Device, I2C_DirectionTypeDef Direction); /*<!This function deinitialize the DMA Stream used 
+  void I2C_HAL_DMADeInit(i2c_dev_t* i2c_dev); /*<!This function deinitialize the DMA Stream used 
                                                                                             by I2C Device (Configure them to their default
                                                                                             values). DMA clock is not disabled */
 #endif /* I2C_DMA_PROGMODEL */
   
-  void I2C_HAL_ITInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDef Direction, I2C_ProgModelTypeDef ProgModel); /*<!This function configures NVIC and interrupts used 
+  void I2C_HAL_ITInit(i2c_dev_t* i2c_dev); /*<!This function configures NVIC and interrupts used 
                                                                                                                                                  by I2C Device according to enabled options */  
   
-  void I2C_HAL_ITDeInit(I2C_DevTypeDef Device, uint32_t Options, I2C_DirectionTypeDef Direction, I2C_ProgModelTypeDef ProgModel); /*<!This function deinitialize NVIC and interrupts used 
+  void I2C_HAL_ITDeInit(i2c_dev_t* i2c_dev); /*<!This function deinitialize NVIC and interrupts used 
                                                                                                                                              by I2C Device  */     
 
   
