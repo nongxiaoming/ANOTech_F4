@@ -41,7 +41,7 @@ static void thread_entry(void* parameter)
 
 
   mpu6050_thread_init();
-
+  mavlink_thread_init();
 #ifdef RT_USING_FINSH
 		finsh_system_init();
 		finsh_set_device(RT_CONSOLE_DEVICE_NAME);

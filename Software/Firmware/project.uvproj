@@ -356,13 +356,13 @@
             <wLevel>0</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
+            <uC99>1</uC99>
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.;..\rt-thread\components\dfs;..\rt-thread\components\dfs\filesystems\devfs;..\rt-thread\components\dfs\include;..\rt-thread\components\drivers\include;..\rt-thread\components\finsh;..\rt-thread\components\init;..\rt-thread\include;..\rt-thread\libcpu\arm\common;..\rt-thread\libcpu\arm\cortex-m4;Libraries\CMSIS\Device\ST\STM32F4xx\Include;Libraries\CMSIS\Include;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\STM32_USB_Device_Library\Class\cdc\inc;Libraries\STM32_USB_Device_Library\Core\inc;Libraries\STM32_USB_HOST_Library\Core\inc;Libraries\STM32_USB_OTG_Driver\inc;applications;drivers</IncludePath>
+              <IncludePath>.;..\rt-thread\components\dfs;..\rt-thread\components\dfs\filesystems\devfs;..\rt-thread\components\dfs\include;..\rt-thread\components\drivers\include;..\rt-thread\components\finsh;..\rt-thread\components\init;..\rt-thread\include;..\rt-thread\libcpu\arm\common;..\rt-thread\libcpu\arm\cortex-m4;Libraries\CMSIS\Device\ST\STM32F4xx\Include;Libraries\CMSIS\Include;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\STM32_USB_Device_Library\Class\cdc\inc;Libraries\STM32_USB_Device_Library\Core\inc;Libraries\STM32_USB_HOST_Library\Core\inc;Libraries\STM32_USB_OTG_Driver\inc;applications;drivers;.\mavlink;.\mavlink\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -414,6 +414,11 @@
               <FileName>startup.c</FileName>
               <FileType>1</FileType>
               <FilePath>applications\startup.c</FilePath>
+            </File>
+            <File>
+              <FileName>thread_mavlink.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\thread_mavlink.c</FilePath>
             </File>
           </Files>
         </Group>
