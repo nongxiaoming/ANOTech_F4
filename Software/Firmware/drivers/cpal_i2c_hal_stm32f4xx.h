@@ -201,68 +201,7 @@ extern "C" {
  #define I2C1_DMA_RX_HT_FLAG        DMA_FLAG_HTIF0
  #define I2C1_DMA_RX_TE_FLAG        DMA_FLAG_TEIF0     
    
- 
-///*========= I2C2 specific defines (Clocks and DMA) =========*/   
-//  
-//#define I2C2_CLK                   RCC_APB1Periph_I2C2
-//#define I2C2_DR                    ((uint32_t)0x40005810)
-//#define I2C2_AF                    GPIO_AF_I2C2  
-//  
-//#define I2C2_DMA                   DMA1
-//#define I2C2_DMA_CLK               RCC_AHB1Periph_DMA1 
-//#define I2C2_DMA_CHANNEL           DMA_Channel_7  
-//  
-//#define I2C2_IT_EVT_IRQn           I2C2_EV_IRQn  
-//#define I2C2_IT_ERR_IRQn           I2C2_ER_IRQn   
 
-///* TX Direction */
-//#define I2C2_DMA_TX_Stream         DMA1_Stream7
-//#define I2C2_DMA_TX_IRQn           DMA1_Stream7_IRQn
-//#define I2C2_DMA_TX_IRQHandler     DMA1_Stream7_IRQHandler
-//#define I2C2_DMA_TX_TC_FLAG        DMA_FLAG_TCIF7
-//#define I2C2_DMA_TX_HT_FLAG        DMA_FLAG_HTIF7
-//#define I2C2_DMA_TX_TE_FLAG        DMA_FLAG_TEIF7  
-//  
-
-// #define I2C2_DMA_RX_Stream         DMA1_Stream3
-// #define I2C2_DMA_RX_IRQn           DMA1_Stream3_IRQn
-// #define I2C2_DMA_RX_IRQHandler     DMA1_Stream3_IRQHandler
-// #define I2C2_DMA_RX_TC_FLAG        DMA_FLAG_TCIF3
-// #define I2C2_DMA_RX_HT_FLAG        DMA_FLAG_HTIF3
-// #define I2C2_DMA_RX_TE_FLAG        DMA_FLAG_TEIF3
-
-//   
-///*========= I2C3 specific defines (Clocks and DMA) =========*/   
-//  
-//#define I2C3_CLK                   RCC_APB1Periph_I2C3
-//#define I2C3_DR                    ((uint32_t)0x40005C10)
-//#define I2C3_AF                    GPIO_AF_I2C3  
-//  
-//#define I2C3_DMA                   DMA1
-//#define I2C3_DMA_CLK               RCC_AHB1Periph_DMA1 
-//#define I2C3_DMA_CHANNEL           DMA_Channel_3  
-//    
-//#define I2C3_IT_EVT_IRQn           I2C3_EV_IRQn  
-//#define I2C3_IT_ERR_IRQn           I2C3_ER_IRQn   
-
-///* TX Direction */
-//#define I2C3_DMA_TX_Stream         DMA1_Stream4
-//#define I2C3_DMA_TX_IRQn           DMA1_Stream4_IRQn
-//#define I2C3_DMA_TX_IRQHandler     DMA1_Stream4_IRQHandler
-//#define I2C3_DMA_TX_TC_FLAG        DMA_FLAG_TCIF4
-//#define I2C3_DMA_TX_HT_FLAG        DMA_FLAG_HTIF4
-//#define I2C3_DMA_TX_TE_FLAG        DMA_FLAG_TEIF4  
-//  
-///* RX Direction */
-//#define I2C3_DMA_RX_Stream         DMA1_Stream2
-//#define I2C3_DMA_RX_IRQn           DMA1_Stream2_IRQn
-//#define I2C3_DMA_RX_IRQHandler     DMA1_Stream2_IRQHandler
-//#define I2C3_DMA_RX_TC_FLAG        DMA_FLAG_TCIF2
-//#define I2C3_DMA_RX_HT_FLAG        DMA_FLAG_HTIF2
-//#define I2C3_DMA_RX_TE_FLAG        DMA_FLAG_TEIF2 
-  
-
-/*========= Peripheral Clock Command =========*/
   
 #define I2C_CLK_CMD(clk,cmd)                   RCC_APB1PeriphClockCmd((clk),(cmd))
 
@@ -306,41 +245,41 @@ extern "C" {
 /* DMA interrupts flag management */
 
   
-#define I2C_HAL_GET_DMATX_TCIT(device)    ((I2C_DMA_TX_TC_FLAG[(device)] & DMA_HIGH_ISR_MASK) != 0) ? \
-                                                 (uint32_t)(I2C_DMA[(device)]->HISR & I2C_DMA_TX_TC_FLAG [(device)]) :\
-                                                 (uint32_t)(I2C_DMA[(device)]->LISR & I2C_DMA_TX_TC_FLAG [(device)])
+#define I2C_HAL_GET_DMATX_TCIT(device)    ((I2C_DMA_TX_TC_FLAG[(device)->dev] & DMA_HIGH_ISR_MASK) != 0) ? \
+                                                 (uint32_t)((device)->DMA->HISR & I2C_DMA_TX_TC_FLAG [(device)->dev]) :\
+                                                 (uint32_t)((device)->DMA->LISR & I2C_DMA_TX_TC_FLAG [(device)->dev])
   
-#define I2C_HAL_GET_DMATX_HTIT(device)    ((I2C_DMA_TX_HT_FLAG[(device)] & DMA_HIGH_ISR_MASK) != 0 ? \
-                                                 (uint32_t)(I2C_DMA[(device)]->HISR & I2C_DMA_TX_HT_FLAG [(device)]):\
-                                                 (uint32_t)(I2C_DMA[(device)]->LISR & I2C_DMA_TX_HT_FLAG [(device)]))
+#define I2C_HAL_GET_DMATX_HTIT(device)    ((I2C_DMA_TX_HT_FLAG[(device)->dev] & DMA_HIGH_ISR_MASK) != 0 ? \
+                                                 (uint32_t)((device)->DMA->HISR & I2C_DMA_TX_HT_FLAG [(device)->dev]):\
+                                                 (uint32_t)((device)->DMA->LISR & I2C_DMA_TX_HT_FLAG [(device)->dev]))
 
-#define I2C_HAL_GET_DMATX_TEIT(device)    ((I2C_DMA_TX_TE_FLAG[(device)] & DMA_HIGH_ISR_MASK) != 0 ? \
-                                                 (uint32_t)(I2C_DMA[(device)]->HISR & I2C_DMA_TX_TE_FLAG [(device)]):\
-                                                 (uint32_t)(I2C_DMA[(device)]->LISR & I2C_DMA_TX_TE_FLAG [(device)]))
+#define I2C_HAL_GET_DMATX_TEIT(device)    ((I2C_DMA_TX_TE_FLAG[(device)->dev] & DMA_HIGH_ISR_MASK) != 0 ? \
+                                                 (uint32_t)((device)->DMA->HISR & I2C_DMA_TX_TE_FLAG [(device)->dev]):\
+                                                 (uint32_t)((device)->DMA->LISR & I2C_DMA_TX_TE_FLAG [(device)->dev]))
 
-#define I2C_HAL_GET_DMARX_TCIT(device)    ((I2C_DMA_RX_TC_FLAG[(device)] & DMA_HIGH_ISR_MASK) != 0 ? \
-                                                 (uint32_t)(I2C_DMA[(device)]->HISR & I2C_DMA_RX_TC_FLAG [(device)]):\
-                                                 (uint32_t)(I2C_DMA[(device)]->LISR & I2C_DMA_RX_TC_FLAG [(device)]))  
+#define I2C_HAL_GET_DMARX_TCIT(device)    ((I2C_DMA_RX_TC_FLAG[(device)->dev] & DMA_HIGH_ISR_MASK) != 0 ? \
+                                                 (uint32_t)((device)->DMA->HISR & I2C_DMA_RX_TC_FLAG [(device)->dev]):\
+                                                 (uint32_t)((device)->DMA->LISR & I2C_DMA_RX_TC_FLAG [(device)->dev]))  
 
-#define I2C_HAL_GET_DMARX_HTIT(device)    ((I2C_DMA_RX_HT_FLAG[(device)] & DMA_HIGH_ISR_MASK) != 0 ? \
-                                                 (uint32_t)(I2C_DMA[(device)]->HISR & I2C_DMA_RX_HT_FLAG [(device)]):\
-                                                 (uint32_t)(I2C_DMA[(device)]->LISR & I2C_DMA_RX_HT_FLAG [(device)]))
+#define I2C_HAL_GET_DMARX_HTIT(device)    ((I2C_DMA_RX_HT_FLAG[(device)->dev] & DMA_HIGH_ISR_MASK) != 0 ? \
+                                                 (uint32_t)((device)->DMA->HISR & I2C_DMA_RX_HT_FLAG [(device)->dev]):\
+                                                 (uint32_t)((device)->DMA->LISR & I2C_DMA_RX_HT_FLAG [(device)->dev]))
 
-#define I2C_HAL_GET_DMARX_TEIT(device)    ((I2C_DMA_RX_TE_FLAG[(device)] & DMA_HIGH_ISR_MASK) != 0 ? \
-                                                 (uint32_t)(I2C_DMA[(device)]->HISR & I2C_DMA_RX_TE_FLAG [(device)]):\
-                                                 (uint32_t)(I2C_DMA[(device)]->LISR & I2C_DMA_RX_TE_FLAG [(device)]))
+#define I2C_HAL_GET_DMARX_TEIT(device)    ((I2C_DMA_RX_TE_FLAG[(device)->dev] & DMA_HIGH_ISR_MASK) != 0 ? \
+                                                 (uint32_t)((device)->DMA->HISR & I2C_DMA_RX_TE_FLAG [(device)->dev]):\
+                                                 (uint32_t)((device)->DMA->LISR & I2C_DMA_RX_TE_FLAG [(device)->dev]))
   
-#define I2C_HAL_CLEAR_DMATX_IT(device)    ((I2C_DMA_TX_TC_FLAG[(device)] & DMA_HIGH_ISR_MASK) != 0) ? \
-                                                 (I2C_DMA[(device)]->HIFCR = (I2C_DMA_TX_TC_FLAG[(device)] |\
-                                                 I2C_DMA_TX_HT_FLAG[(device)] | I2C_DMA_TX_TE_FLAG[(device)])) :\
-                                                 (I2C_DMA[(device)]->LIFCR = (I2C_DMA_TX_TC_FLAG[(device)]|\
-                                                 I2C_DMA_TX_HT_FLAG[(device)] | I2C_DMA_TX_TE_FLAG[(device)]))
+#define I2C_HAL_CLEAR_DMATX_IT(device)    ((I2C_DMA_TX_TC_FLAG[(device)->dev] & DMA_HIGH_ISR_MASK) != 0) ? \
+                                                 ((device)->DMA->HIFCR = (I2C_DMA_TX_TC_FLAG[(device)->dev] |\
+                                                 I2C_DMA_TX_HT_FLAG[(device)->dev] | I2C_DMA_TX_TE_FLAG[(device)->dev])) :\
+                                                 ((device)->DMA->LIFCR = (I2C_DMA_TX_TC_FLAG[(device)->dev]|\
+                                                 I2C_DMA_TX_HT_FLAG[(device)->dev] | I2C_DMA_TX_TE_FLAG[(device)->dev]))
                                                    
-#define I2C_HAL_CLEAR_DMARX_IT(device)    ((I2C_DMA_RX_TC_FLAG[(device)] & DMA_HIGH_ISR_MASK) != 0) ? \
-                                                 (I2C_DMA[(device)]->HIFCR = (I2C_DMA_RX_TC_FLAG[(device)] |\
-                                                 I2C_DMA_RX_HT_FLAG[(device)] | I2C_DMA_RX_TE_FLAG[(device)])) :\
-                                                 (I2C_DMA[(device)]->LIFCR = (I2C_DMA_RX_TC_FLAG[(device)]|\
-                                                 I2C_DMA_RX_HT_FLAG[(device)] | I2C_DMA_RX_TE_FLAG[(device)]))
+#define I2C_HAL_CLEAR_DMARX_IT(device)    ((I2C_DMA_RX_TC_FLAG[(device)->dev] & DMA_HIGH_ISR_MASK) != 0) ? \
+                                                 ((device)->DMA->HIFCR = (I2C_DMA_RX_TC_FLAG[(device)->dev] |\
+                                                 I2C_DMA_RX_HT_FLAG[(device)->dev] | I2C_DMA_RX_TE_FLAG[(device)->dev])) :\
+                                                 ((device)->DMA->LIFCR = (I2C_DMA_RX_TC_FLAG[(device)->dev]|\
+                                                 I2C_DMA_RX_HT_FLAG[(device)->dev] | I2C_DMA_RX_TE_FLAG[(device)->dev]))
                                                    
 /* Get DMA data counter */  
 
@@ -350,8 +289,6 @@ extern "C" {
  
 
      
-   
-//#define I2C_HAL_DISABLE_BUFIT(device)     I2C_DEVICE[(device)]->CR2 &= ~I2C_CR2_ITBUFEN 
   
 
 /* I2C flags management */

@@ -12,15 +12,7 @@
                                                  i2c_dev->timeout = I2C_TIMEOUT_DEFAULT
                                                    
 
-/*========= Table Exported from HAL =========*/
-
-extern I2C_TypeDef* I2C_DEVICE[];
-
 #ifdef I2C_DMA_PROGMODEL
-extern DMA_TypeDef* I2C_DMA[];
-
-extern DMA_Stream_TypeDef* I2C_DMA_TX_Stream[]; 
-extern DMA_Stream_TypeDef* I2C_DMA_RX_Stream[];
 
 
 extern const uint32_t I2C_DMA_TX_TC_FLAG[];
@@ -149,7 +141,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     I2C_LOG("\n\rLOG : I2C Device Enabled"); 
     
     /* Initialize I2Cx device with parameters stored in pI2C_Struct */
-    I2C_Init(I2C_DEVICE[i2c_dev->dev], i2c_dev->I2C_InitStruct);
+    I2C_Init(i2c_dev->I2C, i2c_dev->I2C_InitStruct);
     
     I2C_LOG("\n\rLOG : I2C Device Config");   
     
@@ -211,8 +203,6 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     
     I2C_LOG("\n\rLOG : I2C Device Ready"); 
     
-    /* Initialize Timeout Procedure */
-    //TIMEOUT_INIT();
     
     return RT_EOK;
   }    
@@ -305,10 +295,6 @@ uint32_t I2CDev_DeInit(i2c_dev_t* i2c_dev)
 
     I2C_LOG("\n\rLOG :Set State fields to default"); 
     
-    /*----------------------------------------------------------------------------
-    Deinitialize Timeout Procedure
-    -----------------------------------------------------------------------------*/
-    //TIMEOUT_DEINIT();  
     
     return RT_EOK;
   }  
@@ -408,7 +394,7 @@ uint32_t I2C_Write(i2c_dev_t* i2c_dev)
     if ((i2c_dev->options & OPT_I2C_NOSTOP_MODE) == 0)
     {
       /* Wait until Busy flag is reset */ 
-      I2C_TIMEOUT(!(I2C_HAL_GET_BUSY(i2c_dev->dev)), I2C_TIMEOUT_BUSY);
+      I2C_TIMEOUT(!((uint16_t)(i2c_dev->I2C->SR2 & I2C_SR2_BUSY) ), I2C_TIMEOUT_BUSY);
     } 
        
       I2C_LOG("\n\rLOG : I2C Device Master");
@@ -502,7 +488,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
     if ((i2c_dev->options & OPT_I2C_NOSTOP_MODE) == 0)
     {
       /* Wait until Busy flag is reset */ 
-      I2C_TIMEOUT(!(I2C_HAL_GET_BUSY(i2c_dev->dev)), I2C_TIMEOUT_BUSY);
+      I2C_TIMEOUT(!((uint16_t)(i2c_dev->I2C->SR2 & I2C_SR2_BUSY) ), I2C_TIMEOUT_BUSY);
     }
 
 #ifdef I2C_DMA_1BYTE_CASE              
@@ -527,7 +513,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
      i2c_dev->I2C->CR1 |= I2C_CR1_START;
       
       /* Wait until SB flag is set */
-      I2C_TIMEOUT(I2C_HAL_GET_SB(i2c_dev->dev), I2C_TIMEOUT_SB);
+      I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_SB), I2C_TIMEOUT_SB);
       
       /* Send Device Address */
       /* If 7 Bit Addressing Mode */
@@ -537,7 +523,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
         i2c_dev->I2C->DR =(uint8_t)(i2c_dev->addr<<0x01);   
         
         /* Wait until ADDR flag is reset */ 
-        I2C_TIMEOUT(I2C_HAL_GET_ADDR(i2c_dev->dev), I2C_TIMEOUT_ADDR);        
+        I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_ADDR), I2C_TIMEOUT_ADDR);        
       }      
   #ifdef I2C_10BIT_ADDR_MODE
       /* If 10 Bit Addressing Mode */
@@ -570,7 +556,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
       i2c_dev->I2C->SR2;
 			
       /* Wait until TXE flag is set */ 
-      I2C_TIMEOUT(I2C_HAL_GET_TXE(i2c_dev->dev), I2C_TIMEOUT_TXE); 
+      I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_TXE), I2C_TIMEOUT_TXE); 
       
       /* If 8 Bit register mode */
       if ((i2c_dev->options & OPT_16BIT_REG) == 0)
@@ -579,7 +565,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
         i2c_dev->I2C->DR = (uint8_t)(((i2c_dev->reg)& 0x00FF)); 
         
         /* Wait until TXE flag is set */ 
-        I2C_TIMEOUT(I2C_HAL_GET_TXE(i2c_dev->dev), I2C_TIMEOUT_TXE); 
+        I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_TXE), I2C_TIMEOUT_TXE); 
       }      
   #ifdef I2C_16BIT_REG_OPTION
       /* If 16 Bit register mode */
@@ -658,13 +644,13 @@ uint32_t I2C_IsDeviceReady(i2c_dev_t* i2c_dev)
  i2c_dev->I2C->CR1 |= I2C_CR1_START;
   
   /* Wait until SB flag is set */ 
-  I2C_TIMEOUT(I2C_HAL_GET_SB(i2c_dev->dev), I2C_TIMEOUT_SB); 
+  I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_SB), I2C_TIMEOUT_SB); 
   
   /* Send Slave address with bit0 reset for write */
   i2c_dev->I2C->DR = (uint8_t)(i2c_dev->addr<<0x01);   
   
   /* wait until timeout elapsed or target device acknowledge its address*/
-  while ((I2C_HAL_GET_ADDR(i2c_dev->dev) == 0) && (Timeout-- != 0));
+  while (((i2c_dev->I2C->SR1 & I2C_SR1_ADDR) == 0) && (Timeout-- != 0));
   
   /* If Timeout occurred  */
   if (Timeout == 0) 
@@ -681,7 +667,7 @@ uint32_t I2C_IsDeviceReady(i2c_dev_t* i2c_dev)
 		i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;
     
     /* wait until Busy flag is reset */
-    while(I2C_HAL_GET_BUSY(i2c_dev->dev));
+    while(i2c_dev->I2C->SR2 & I2C_SR2_BUSY);
     
     /* Disable I2Cx Device */
     i2c_dev->I2C->CR1 &= ~I2C_CR1_PE;
@@ -860,7 +846,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
   I2C_LOG("\n\r\n\rLOG <I2C_DMA_TX_IRQHandler> : I2C Device TX DMA ");
   
   /*------------- If TC interrupt ------------*/
-  if((I2C_HAL_GET_DMATX_TCIT(i2c_dev->dev)) != 0)
+  if((I2C_HAL_GET_DMATX_TCIT(i2c_dev)) != 0)
   {  
     I2C_LOG("\n\rLOG : I2C Device TX Complete");
     
@@ -877,7 +863,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
         i2c_dev->I2C->CR2 &= ~I2C_CR2_DMAEN ;
 			
         /* Wait until BTF flag is set */ 
-        I2C_TIMEOUT(I2C_HAL_GET_BTF(i2c_dev->dev), I2C_TIMEOUT_BTF);
+        I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_BTF), I2C_TIMEOUT_BTF);
         
         /* No Stop Condition Generation option bit not selected */   
         if ((i2c_dev->options & OPT_I2C_NOSTOP) == 0)
@@ -886,11 +872,11 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
           i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;
           
           /* Wait until Busy flag is reset */         
-          I2C_TIMEOUT(!(I2C_HAL_GET_BUSY(i2c_dev->dev)), I2C_TIMEOUT_BUSY);
+          I2C_TIMEOUT(!((uint16_t)(i2c_dev->I2C->SR2 & I2C_SR2_BUSY) ), I2C_TIMEOUT_BUSY);
         }
         
         /* Disable DMA Channel */                 
-        I2C_HAL_DISABLE_DMATX(i2c_dev->dev);        
+        i2c_dev->DMA_TX_Stream->CR &= ~DMA_CR_EN ;        
         
         /* Disable EVENT Interrupt */
 				i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
@@ -906,7 +892,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
     I2C_TXTC_UserCallback(i2c_dev);
   }
   /*------------- If HT interrupt ------------*/
-  else if ((I2C_HAL_GET_DMATX_HTIT(i2c_dev->dev)) != 0)
+  else if ((I2C_HAL_GET_DMATX_HTIT(i2c_dev)) != 0)
   {         
     I2C_LOG("\n\rLOG : I2C Device TX DMA Half Transfer ");
     
@@ -914,7 +900,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
     I2C_DMATXHT_UserCallback(i2c_dev);
   }  
   /*------------- If TE interrupt ------------*/
-  else if ((I2C_HAL_GET_DMATX_TEIT(i2c_dev->dev)) != 0)
+  else if ((I2C_HAL_GET_DMATX_TEIT(i2c_dev)) != 0)
   { 
     I2C_LOG("\n\rERROR : I2C Device TX DMA Transfer Error ");
     
@@ -922,14 +908,14 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
     i2c_dev->state = I2C_STATE_ERROR; 
     
     /* Update remaining number of data */
-    i2c_dev->bytes_to_write = I2C_HAL_DMATX_GET_CNDT(i2c_dev->dev);
+    i2c_dev->bytes_to_write = i2c_dev->DMA_TX_Stream->NDTR;
     
     /* Call DMA TX TE UserCallback */
     I2C_DMATXTE_UserCallback(i2c_dev); 
   }  
   
    /* Clear DMA Interrupt Flag */
-    I2C_HAL_CLEAR_DMATX_IT(i2c_dev->dev);
+    I2C_HAL_CLEAR_DMATX_IT(i2c_dev);
   
   return RT_EOK;
 }
@@ -949,7 +935,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
   I2C_LOG("\n\r\n\rLOG <I2C_DMA_RX_IRQHandler> : I2C Device RX DMA ");
   
   /*------------- If TC interrupt ------------*/
-  if ((I2C_HAL_GET_DMARX_TCIT(i2c_dev->dev)) != 0)
+  if ((I2C_HAL_GET_DMARX_TCIT(i2c_dev)) != 0)
   {   
     I2C_LOG("\n\rLOG : I2C Device RX Complete");
     
@@ -969,10 +955,10 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
          i2c_dev->I2C->CR2 &= ~I2C_CR2_DMAEN ;
         
         /* Wait until Busy flag is reset */ 
-        I2C_TIMEOUT(!(I2C_HAL_GET_BUSY(i2c_dev->dev)), I2C_TIMEOUT_BUSY);
+        I2C_TIMEOUT(!((uint16_t)(i2c_dev->I2C->SR2 & I2C_SR2_BUSY)), I2C_TIMEOUT_BUSY);
         
         /* Disable DMA Channel */
-        I2C_HAL_DISABLE_DMARX(i2c_dev->dev);
+        i2c_dev->DMA_RX_Stream->CR &= ~DMA_CR_EN;
         
         /* Disable EVENT Interrupt */
 			  i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
@@ -995,7 +981,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
     }
   }  
   /*------------- If HT interrupt ------------*/
-  else if ((I2C_HAL_GET_DMARX_HTIT(i2c_dev->dev)) != 0)
+  else if ((I2C_HAL_GET_DMARX_HTIT(i2c_dev)) != 0)
   {   
     I2C_LOG("\n\rLOG : I2C Device RX DMA Half Transfer");
     
@@ -1003,7 +989,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
     I2C_DMARXHT_UserCallback(i2c_dev);
   }  
   /*------------- If TE interrupt ------------*/
-  else if ((I2C_HAL_GET_DMARX_TEIT(i2c_dev->dev)) != 0)
+  else if ((I2C_HAL_GET_DMARX_TEIT(i2c_dev)) != 0)
   {   
     I2C_LOG("\n\rERROR : I2C Device RX DMA Transfer Error ");
     
@@ -1011,14 +997,14 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
     i2c_dev->state = I2C_STATE_ERROR; 
     
     /* Update remaining number of data */
-    i2c_dev->bytes_to_read = I2C_HAL_DMARX_GET_CNDT(i2c_dev->dev);
+    i2c_dev->bytes_to_read = i2c_dev->DMA_RX_Stream->NDTR;
     
     /* Call DMA RX TE UserCallback */
     I2C_DMARXTE_UserCallback(i2c_dev); 
   }
   
   /* Clear DMA Interrupt Flag */
-  I2C_HAL_CLEAR_DMARX_IT(i2c_dev->dev);
+  I2C_HAL_CLEAR_DMARX_IT(i2c_dev);
   
   return RT_EOK;
 }
@@ -1184,7 +1170,7 @@ static uint32_t I2C_MASTER_ADDR_Handle(i2c_dev_t* i2c_dev)
             i2c_dev->I2C->DR = (uint8_t)((i2c_dev->reg)& 0x00FF); 
             
             /* Wait until TXE flag is set */ 
-            I2C_TIMEOUT(I2C_HAL_GET_TXE(i2c_dev->dev), I2C_TIMEOUT_TXE);              
+            I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_TXE), I2C_TIMEOUT_TXE);              
           }          
 #ifdef I2C_16BIT_REG_OPTION
           /* If 16 Bit register mode */
@@ -1330,7 +1316,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
         i2c_dev->I2C->CR2 &= ~I2C_CR2_ITBUFEN;
         
         /* Wait until BTF flag is set */ 
-        I2C_TIMEOUT(I2C_HAL_GET_BTF(i2c_dev->dev), I2C_TIMEOUT_BTF); 
+        I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_BTF), I2C_TIMEOUT_BTF); 
         
         /* Generate Stop Condition */
         i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;
@@ -1363,7 +1349,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
          i2c_dev->I2C->CR2 &= ~I2C_CR2_ITBUFEN;
         
         /* Wait until BTF flag is set */ 
-        I2C_TIMEOUT(I2C_HAL_GET_BTF(i2c_dev->dev), I2C_TIMEOUT_BTF); 
+        I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_BTF), I2C_TIMEOUT_BTF); 
         
         /* Program NACK Generation */
         	i2c_dev->I2C->CR1 &= ~I2C_CR1_ACK;
@@ -1376,7 +1362,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
         i2c_dev->bytes_to_read--; 
         
          /* Wait until BTF flag is set */ 
-        I2C_TIMEOUT(I2C_HAL_GET_BTF(i2c_dev->dev), I2C_TIMEOUT_BTF); 
+        I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_BTF), I2C_TIMEOUT_BTF); 
         
         /* Generate Stop Condition */
         i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;        
@@ -1449,7 +1435,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
       }
       
       /* Wait until Busy flag is reset */ 
-      I2C_TIMEOUT(!(I2C_HAL_GET_BUSY(i2c_dev->dev)), I2C_TIMEOUT_BUSY);
+      I2C_TIMEOUT(!((uint16_t)(i2c_dev->I2C->SR2 & I2C_SR2_BUSY)), I2C_TIMEOUT_BUSY);
       
       /* Enable ACK generation and disable POS */
       i2c_dev->I2C->CR1 |= I2C_CR1_ACK;      
@@ -1509,7 +1495,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev)
       i2c_dev->I2C->CR2 &= ~I2C_CR2_LAST ; 
     
       /* Enable TX DMA Channels */
-      I2C_HAL_ENABLE_DMATX(i2c_dev->dev);
+			i2c_dev->DMA_TX_Stream->CR |= DMA_CR_EN ; 
       
       I2C_LOG("\n\rLOG : I2C Device DMA TX Enabled");       
     }    
@@ -1523,7 +1509,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev)
 			i2c_dev->I2C->CR2 |= I2C_CR2_LAST;
     
       /* Enable RX DMA Channels */
-      I2C_HAL_ENABLE_DMARX(i2c_dev->dev);                  
+			i2c_dev->DMA_RX_Stream->CR |= DMA_CR_EN ;                  
     }
     
     return RT_EOK; 

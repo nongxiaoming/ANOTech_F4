@@ -90,6 +90,13 @@ typedef struct
   I2C_DevTypeDef         dev;          /*!<Instance of the device. This parameter can be one 
                                                  of the following values: CPAL_Dev_TypeDef */
    I2C_TypeDef*         I2C;
+#ifdef I2C_DMA_PROGMODEL
+	 DMA_TypeDef *        DMA;
+	 uint32_t DMA_Channel;
+   DMA_Stream_TypeDef	 *DMA_TX_Stream;
+	 DMA_Stream_TypeDef	 *DMA_RX_Stream;
+#endif
+	
   I2C_DirectionTypeDef   direction;    /*!<Specifies the direction for the device transfers. 
                                                  It can be one of the following values: CPAL_Direction_TypeDef */                                         
 
@@ -107,7 +114,7 @@ typedef struct
  
   volatile I2C_StateTypeDef  state;        /*!<Holds the current State of the CPAL driver relative to the device 
                                                  instantiated by CPAL_Dev field. The state parameter can be one of 
-                                                 the following values: CPAL_State_Enum */
+                                                 the following values: State_Enum */
 
   volatile uint32_t           error;    /*!<Specifies the error code for the current operation.The error codes 
                                                  are specified for each device type as follows: 

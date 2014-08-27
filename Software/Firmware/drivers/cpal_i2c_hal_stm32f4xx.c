@@ -5,6 +5,12 @@
 
 i2c_dev_t i2c1_dev = { I2C1_Dev,                          /* I2C1 device number */
 	                                       I2C1,
+	                                      #ifdef I2C_DMA_PROGMODEL
+	                                      I2C1_DMA,
+	                                      I2C1_DMA_CHANNEL,
+	                                      I2C1_DMA_TX_Stream,
+	                                      I2C1_DMA_RX_Stream,
+	                                      #endif
                                         I2C_DIRECTION_TXRX,                /* Transmitter and Receiver direction selected */
                                         #ifdef I2C_DMA_PROGMODEL
                                         I2C_PROGMODEL_DMA,                 /* DMA Programming Model selected */
@@ -44,10 +50,7 @@ const uint32_t I2C_SDA_GPIO_CLK[3] = {I2C1_SDA_GPIO_CLK,I2C2_SDA_GPIO_CLK,I2C3_S
 const uint16_t I2C_SDA_GPIO_PINSOURCE[3] = {I2C1_SDA_GPIO_PINSOURCE,I2C2_SDA_GPIO_PINSOURCE,I2C3_SDA_GPIO_PINSOURCE};
 
 const uint32_t I2C_DMA_CLK[1] = {I2C1_DMA_CLK};
-const uint32_t I2C_DMA_CHANNEL[1] = {I2C1_DMA_CHANNEL};
 
-DMA_Stream_TypeDef* I2C_DMA_TX_Stream[1] = {I2C1_DMA_TX_Stream};
-DMA_Stream_TypeDef* I2C_DMA_RX_Stream[1] = {I2C1_DMA_RX_Stream};
 
 const IRQn_Type I2C_DMA_TX_IRQn[1] = {I2C1_DMA_TX_IRQn};
 const IRQn_Type I2C_DMA_RX_IRQn[1] = {I2C1_DMA_RX_IRQn};
@@ -185,7 +188,7 @@ void I2C_HAL_DMAInit(i2c_dev_t* i2c_dev)
   DMA_CLK_CMD(I2C_DMA_CLK[i2c_dev->dev], ENABLE);
   
   /* I2Cx Common Stream Configuration */
-  I2C_DMA_InitStructure.DMA_Channel = I2C_DMA_CHANNEL[i2c_dev->dev];
+  I2C_DMA_InitStructure.DMA_Channel = i2c_dev->DMA_Channel;
   I2C_DMA_InitStructure.DMA_Memory0BaseAddr = 0;
   I2C_DMA_InitStructure.DMA_BufferSize = 0;
   I2C_DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
@@ -209,7 +212,7 @@ void I2C_HAL_DMAInit(i2c_dev_t* i2c_dev)
     I2C_DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
     
     /* Initialize I2Cx DMA Tx Stream */
-    DMA_Init((DMA_Stream_TypeDef*)I2C_DMA_TX_Stream[i2c_dev->dev], &I2C_DMA_InitStructure);   
+    DMA_Init(i2c_dev->DMA_TX_Stream, &I2C_DMA_InitStructure);   
   }
   
   /* If RX Direction (Reception) selected */
@@ -219,7 +222,7 @@ void I2C_HAL_DMAInit(i2c_dev_t* i2c_dev)
     I2C_DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
     
     /* Initialize I2Cx DMA Rx Stream */
-    DMA_Init((DMA_Stream_TypeDef*)I2C_DMA_RX_Stream[i2c_dev->dev], &I2C_DMA_InitStructure);   
+    DMA_Init(i2c_dev->DMA_RX_Stream, &I2C_DMA_InitStructure);   
   }
 }
     
@@ -234,7 +237,7 @@ void I2C_HAL_DMAInit(i2c_dev_t* i2c_dev)
 void I2C_HAL_DMATXConfig(i2c_dev_t* i2c_dev)
 {
   /* Set Channel */
-  I2C_DMA_InitStructure.DMA_Channel = I2C_DMA_CHANNEL[i2c_dev->dev];
+  I2C_DMA_InitStructure.DMA_Channel = i2c_dev->DMA_Channel;
   
   /* Set Memory Base Address */
   I2C_DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)(i2c_dev->buffer);
@@ -263,7 +266,7 @@ void I2C_HAL_DMATXConfig(i2c_dev_t* i2c_dev)
   I2C_DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
   
   /* Initialize I2Cx DMA Tx Stream */
-  DMA_Init((DMA_Stream_TypeDef*)I2C_DMA_TX_Stream[i2c_dev->dev], &I2C_DMA_InitStructure);   
+  DMA_Init(i2c_dev->DMA_TX_Stream, &I2C_DMA_InitStructure);   
 }
 
 
@@ -277,7 +280,7 @@ void I2C_HAL_DMATXConfig(i2c_dev_t* i2c_dev)
 void I2C_HAL_DMARXConfig(i2c_dev_t* i2c_dev)
 {
   /* Set Channel */
-  I2C_DMA_InitStructure.DMA_Channel = I2C_DMA_CHANNEL[i2c_dev->dev];
+  I2C_DMA_InitStructure.DMA_Channel = i2c_dev->DMA_Channel;
   
   /* Set Memory Base Address */
   I2C_DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)(i2c_dev->buffer);
@@ -305,7 +308,7 @@ void I2C_HAL_DMARXConfig(i2c_dev_t* i2c_dev)
   I2C_DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
   
   /* Initialize I2Cx DMA Rx Stream */
-  DMA_Init((DMA_Stream_TypeDef*)I2C_DMA_RX_Stream[i2c_dev->dev], &I2C_DMA_InitStructure);   
+  DMA_Init(i2c_dev->DMA_RX_Stream, &I2C_DMA_InitStructure);   
 }
   
  
@@ -322,14 +325,14 @@ void I2C_HAL_DMADeInit(i2c_dev_t* i2c_dev)
   if ((i2c_dev->direction & I2C_DIRECTION_TX) != 0)
   {
     /* Deinitialize I2Cx DMA Tx Stream */
-    DMA_DeInit((DMA_Stream_TypeDef*)I2C_DMA_TX_Stream[i2c_dev->dev]);  
+    DMA_DeInit(i2c_dev->DMA_TX_Stream);  
   }
   
   /* If RX Direction (Reception) selected */
   if ((i2c_dev->direction & I2C_DIRECTION_RX) != 0)
   {
     /* Deinitialize I2Cx DMA Rx Stream */
-    DMA_DeInit((DMA_Stream_TypeDef*)I2C_DMA_RX_Stream[i2c_dev->dev]);  
+    DMA_DeInit(i2c_dev->DMA_RX_Stream);  
   }  
 }  
 #endif /* I2C_DMA_PROGMODEL */
@@ -383,16 +386,16 @@ void I2C_HAL_ITInit(i2c_dev_t* i2c_dev)
       NVIC_Init(&NVIC_InitStructure);
       
       /* Enable DMA TX Channel TCIT  */
-      I2C_HAL_ENABLE_DMATX_TCIT(i2c_dev->dev);
+      i2c_dev->DMA_TX_Stream->CR |= DMA_IT_TC;
       
       /* Enable DMA TX Channel TEIT  */    
-      I2C_HAL_ENABLE_DMATX_TEIT(i2c_dev->dev); 
+      i2c_dev->DMA_TX_Stream->CR |= DMA_IT_TE;
       
       /* If DMA TX HT interrupt Option Bits Selected */
       if ((i2c_dev->options & OPT_DMATX_HTIT) != 0)
       {
-        /* Enable DMA TX Channel HTIT  */    
-        I2C_HAL_ENABLE_DMATX_HTIT(i2c_dev->dev);
+        /* Enable DMA TX Channel HTIT  */ 
+				i2c_dev->DMA_TX_Stream->CR |= DMA_IT_HT;
       }
     }  
     if ((i2c_dev->direction & I2C_DIRECTION_RX) != 0)
@@ -405,16 +408,16 @@ void I2C_HAL_ITInit(i2c_dev_t* i2c_dev)
       NVIC_Init(&NVIC_InitStructure);
       
       /* Enable DMA RX Channel TCIT  */
-      I2C_HAL_ENABLE_DMARX_TCIT(i2c_dev->dev);  
+      i2c_dev->DMA_RX_Stream->CR |= DMA_IT_TC; 
       
       /* Enable DMA RX Channel TEIT  */
-      I2C_HAL_ENABLE_DMARX_TEIT(i2c_dev->dev); 
+			i2c_dev->DMA_RX_Stream->CR |= DMA_IT_TE; 
       
       /* If DMA RX HT interrupt Option Bits Selected */
       if ((i2c_dev->options & OPT_DMARX_HTIT) != 0)
       {
         /* Enable DMA RX Channel HTIT  */    
-        I2C_HAL_ENABLE_DMARX_HTIT(i2c_dev->dev);  
+        i2c_dev->DMA_RX_Stream->CR |= DMA_IT_HT;				
       }
     }
   }
