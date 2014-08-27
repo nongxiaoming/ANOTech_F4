@@ -25,11 +25,9 @@ extern const uint32_t I2C_DMA_TX_TE_FLAG[];
 extern const uint32_t I2C_DMA_RX_TE_FLAG[];
 #endif /* I2C_DMA_PROGMODEL */
 
-/*========= Local structures used in I2C_StructInit() function =========*/ 
 
 I2C_InitTypeDef I2C_InitStructure;
 
-/* Private function prototypes -----------------------------------------------*/
 
 
   static uint32_t I2C_MASTER_START_Handle(i2c_dev_t* i2c_dev); /* Handle Master SB Interrupt event */  
@@ -42,7 +40,6 @@ I2C_InitTypeDef I2C_InitStructure;
  #endif /* I2C_IT_PROGMODEL || I2C_DMA_1BYTE_CASE */
  
 
-/*========= I2C Timeout handler =========*/
 static uint32_t I2C_Timeout (i2c_dev_t* i2c_dev);
 
 /**
@@ -116,25 +113,18 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     } 
 #endif /* I2C_DMA_PROGMODEL */
     
-    /*----------------------------------------------------------------------------
-    Peripheral Clock Initialization
-    ---------------------------------------------------------------------------*/   
     /* Initialize I2Cx Clock */
     I2C_HAL_CLKInit(i2c_dev->dev);
     
     I2C_LOG("\n\rLOG : I2C Device Clock Init"); 
     
-	/*----------------------------------------------------------------------------
-    GPIO pins configuration
-    ---------------------------------------------------------------------------*/
+		
     /* Initialize I2Cx GPIO */
     I2C_HAL_GPIOInit(i2c_dev->dev);
     
     I2C_LOG("\n\rLOG : I2C Device IOs Init");     
 	       
-    /*----------------------------------------------------------------------------
-    Peripheral Initialization
-    ---------------------------------------------------------------------------*/   
+  
     /* Enable I2Cx Device */
      i2c_dev->I2C->CR1 |= I2C_CR1_PE ;
 		 
@@ -176,10 +166,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       I2C_LOG("\n\rLOG : I2C Device NACK Own Address Mode Enabled");
     }
     
-#ifdef I2C_DMA_PROGMODEL
-    /*----------------------------------------------------------------------------
-    DMA Initialization : 
-    ---------------------------------------------------------------------------*/   
+#ifdef I2C_DMA_PROGMODEL 
     /* If DMA Programming model is selected*/
     if (i2c_dev->mode == I2C_PROGMODEL_DMA) 
     {
@@ -190,9 +177,6 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     }
 #endif /* I2C_DMA_PROGMODEL */
     
-    /*----------------------------------------------------------------------------
-    Peripheral and DMA interrupts Initialization
-    ---------------------------------------------------------------------------*/
     /* Initialize I2Cx Interrupts */
     I2C_HAL_ITInit(i2c_dev);
     
@@ -241,35 +225,23 @@ uint32_t I2CDev_DeInit(i2c_dev_t* i2c_dev)
     - If State is I2C_STATE_DISABLED:  
     Perform the deinitialization routines                                   */
     
-    /*----------------------------------------------------------------------------
-    GPIO pins Deinitialization
-    Note: The GPIO clock remains enabled after this deinitialization
-    ---------------------------------------------------------------------------*/
     /* Deinitialize I2Cx GPIO */
     I2C_HAL_GPIODeInit(i2c_dev->dev);
     
     I2C_LOG("\n\rLOG : I2C Device IOs Deinit");
-    
-    /*----------------------------------------------------------------------------
-    Peripheral Deinitialization
-    ---------------------------------------------------------------------------*/   
+     
     /* Disable I2Cx Device */
     i2c_dev->I2C->CR1 &= ~I2C_CR1_PE;
     
     I2C_LOG("\n\rLOG : I2C Device Disabled"); 
     
-    /*----------------------------------------------------------------------------
-    Peripheral Clock Deinitialization
-    ---------------------------------------------------------------------------*/  
     /* Deinitialize I2Cx Clock */
     I2C_HAL_CLKDeInit(i2c_dev->dev);
     
     I2C_LOG("\n\rLOG : I2C Device Clock Deinit");       
     
 #ifdef I2C_DMA_PROGMODEL
-    /*----------------------------------------------------------------------------
-    DMA Deinitialization : if DMA Programming model is selected
-    ---------------------------------------------------------------------------*/   
+  
     if (i2c_dev->mode == I2C_PROGMODEL_DMA)
     {
       I2C_HAL_DMADeInit(i2c_dev);
@@ -278,16 +250,10 @@ uint32_t I2CDev_DeInit(i2c_dev_t* i2c_dev)
     } 
 #endif /* I2C_DMA_PROGMODEL */
     
-    /*----------------------------------------------------------------------------
-    Interrupts Deinitialization
-    ---------------------------------------------------------------------------*/
     I2C_HAL_ITDeInit(i2c_dev);
     
     I2C_LOG("\n\rLOG : I2C Device IT Deinit"); 
-    
-    /*----------------------------------------------------------------------------
-    Structure fields initialization
-    -----------------------------------------------------------------------------*/    
+       
     /* Initialize i2c_dev state parameters to their default values */
     i2c_dev-> state     = I2C_STATE_DISABLED;     /* Device Disabled */
     i2c_dev-> error = I2C_ERR_NONE;       /* No Device Error */
@@ -899,7 +865,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
     /* Call DMA TX HT UserCallback */
     I2C_DMATXHT_UserCallback(i2c_dev);
   }  
-  /*------------- If TE interrupt ------------*/
+  /* If TE interrupt */
   else if ((I2C_HAL_GET_DMATX_TEIT(i2c_dev)) != 0)
   { 
     I2C_LOG("\n\rERROR : I2C Device TX DMA Transfer Error ");
@@ -934,7 +900,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
   
   I2C_LOG("\n\r\n\rLOG <I2C_DMA_RX_IRQHandler> : I2C Device RX DMA ");
   
-  /*------------- If TC interrupt ------------*/
+  /* If TC interrupt */
   if ((I2C_HAL_GET_DMARX_TCIT(i2c_dev)) != 0)
   {   
     I2C_LOG("\n\rLOG : I2C Device RX Complete");
@@ -980,7 +946,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
       I2C_RXTC_UserCallback(i2c_dev);
     }
   }  
-  /*------------- If HT interrupt ------------*/
+  /* If HT interrupt */
   else if ((I2C_HAL_GET_DMARX_HTIT(i2c_dev)) != 0)
   {   
     I2C_LOG("\n\rLOG : I2C Device RX DMA Half Transfer");
@@ -988,7 +954,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
     /* Call DMA RX HT UserCallback */
     I2C_DMARXHT_UserCallback(i2c_dev);
   }  
-  /*------------- If TE interrupt ------------*/
+  /* If TE interrupt */
   else if ((I2C_HAL_GET_DMARX_TEIT(i2c_dev)) != 0)
   {   
     I2C_LOG("\n\rERROR : I2C Device RX DMA Transfer Error ");
