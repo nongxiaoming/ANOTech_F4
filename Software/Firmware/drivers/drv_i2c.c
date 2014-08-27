@@ -1,10 +1,9 @@
 #include "drv_i2c.h"
 
 
-#define I2C_TIMEOUT_DETECT                ((i2c_dev->timeout == I2C_TIMEOUT_MIN) ||\
-                                                 (i2c_dev->timeout == I2C_TIMEOUT_DEFAULT))
+#define I2C_TIMEOUT_DETECT                (i2c_dev->timeout < rt_tick_get())
 
-#define I2C_TIMEOUT(cmd, tout)         i2c_dev->timeout = I2C_TIMEOUT_MIN + (tout);\
+#define I2C_TIMEOUT(cmd, tout)         i2c_dev->timeout = rt_tick_get()+ (tout);\
                                                  while (((cmd) == 0) && (!I2C_TIMEOUT_DETECT));\
                                                  if (I2C_TIMEOUT_DETECT)\
                                                  {\
@@ -1667,10 +1666,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction)
   switch (i2c_dev->mode)
   { 
     
-#if defined (I2C_IT_PROGMODEL) || defined (I2C_DMA_1BYTE_CASE)
-    /*----------------------------------------------------------------------------
-    Interrupt mode : if ProgModel = I2C_PROGMODEL_INTERRUPT
-    ---------------------------------------------------------------------------*/            
+#if defined (I2C_IT_PROGMODEL) || defined (I2C_DMA_1BYTE_CASE)          
   case I2C_PROGMODEL_INTERRUPT:
    
     /* Enable BUFFER Interrupt*/
@@ -1682,9 +1678,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction)
 #endif /* I2C_IT_PROGMODEL || I2C_DMA_1BYTE_CASE */
     
 #ifdef I2C_DMA_PROGMODEL
-    /*----------------------------------------------------------------------------
-    DMA mode : if ProgModel = PROGMODEL_DMA
-    ---------------------------------------------------------------------------*/      
+    
     case I2C_PROGMODEL_DMA:
     
      /* Disable EVENT Interrupt */
@@ -1725,10 +1719,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction)
     
     return RT_EOK; 
 #endif /* I2C_DMA_PROGMODEL */
-    
-    /*----------------------------------------------------------------------------
-    Default: return error and exit Write Operation
-    ---------------------------------------------------------------------------*/      
+      
   default:
     
     /* Update State to I2C_STATE_ERROR */
