@@ -349,17 +349,9 @@ extern "C" {
 #define I2C_HAL_DMARX_GET_CNDT(device)    (uint32_t)(I2C_DMA_RX_Stream[(device)]->NDTR) 
  
 
+     
    
-/* I2C interrupts enable/disable */  
-
-   
-#define I2C_HAL_DISABLE_ERRIT(device)     I2C_DEVICE[(device)]->CR2 &= ~I2C_CR2_ITERREN   
-  
-#define I2C_HAL_ENABLE_EVTIT(device)      I2C_DEVICE[(device)]->CR2 |= I2C_CR2_ITEVTEN   
-  
-#define I2C_HAL_ENABLE_BUFIT(device)      I2C_DEVICE[(device)]->CR2 |= I2C_CR2_ITBUFEN   
-   
-#define I2C_HAL_DISABLE_BUFIT(device)     I2C_DEVICE[(device)]->CR2 &= ~I2C_CR2_ITBUFEN 
+//#define I2C_HAL_DISABLE_BUFIT(device)     I2C_DEVICE[(device)]->CR2 &= ~I2C_CR2_ITBUFEN 
   
 
 /* I2C flags management */

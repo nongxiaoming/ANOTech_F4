@@ -6,10 +6,6 @@ extern I2C_TypeDef* I2C_DEVICE[];
 
 extern i2c_dev_t MPU6050_i2c;
 
-/*------------------------------------------------------------------------------
-                     CPAL User Callbacks implementations 
-------------------------------------------------------------------------------*/
-
 
 /*=========== Timeout UserCallback ===========*/
 
@@ -24,9 +20,7 @@ uint32_t I2C_TIMEOUT_UserCallback(i2c_dev_t* i2c_dev)
   /* Generate STOP */
   i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;
 
- 	MPU6050_DeInit();
-  MPU6050_StructInit();
-  I2CDev_Init(&MPU6050_i2c);
+  I2CDev_Init(i2c_dev);
 
   rt_kprintf("I2C_TIMEOUT_UserCallback\r\n");
 	
@@ -167,9 +161,9 @@ void I2C_ERR_UserCallback(i2c_dev_t* i2c_dev, uint32_t DeviceError)
 {  
   /* Generate STOP */
   i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;
-  	MPU6050_DeInit();
-  MPU6050_StructInit();
-  I2CDev_Init(&MPU6050_i2c);
+//  	MPU6050_DeInit();
+//  MPU6050_StructInit();
+  I2CDev_Init(i2c_dev);
  
 	rt_kprintf("I2C_ERR_UserCallback\r\n");
 }

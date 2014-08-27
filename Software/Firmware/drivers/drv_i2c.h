@@ -65,7 +65,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev); /*<!This function Handles DM
 
 
 
-uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev, I2C_DirectionTypeDef Direction); /* This function Configure I2C DMA 
+uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev); /* This function Configure I2C DMA 
                                                                                                     and Interrupts before starting 
                                                                                                     transfer phase */
 

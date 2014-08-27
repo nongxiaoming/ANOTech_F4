@@ -121,17 +121,7 @@ typedef struct
  volatile uint32_t           timeout;     /*!<This field is with timeout procedure. its used to detect timeout */    
 
   I2C_InitTypeDef*        I2C_InitStruct;  /*!<Pointer to a device Initialization structure as described 
-                                                 in the standard device library driver. 
-                                                 A NULL pointer can be provided for this field and, in this case, 
-                                                 the default values will be used for all the device initialization. 
-                                                 If only some fields need to be modified for the initialization, 
-                                                 one can use the CPAL_PPP_StructInit() function just before setting 
-                                                 the needed fields.
-                                                   Example:
-                                                     I2CDev_InitTypeDef   I2C1_DevStructure;
-                                                     I2CDev_StructInit(&I2C1_DevStructure);
-                                                     I2C1_DevStructure->pI2C_Struct->I2C_Speed = 100000; 
-                                                     CPAL_I2C_Init(&I2C1_DevStructure); */  
+                                                 in the standard device library driver.  */  
 }i2c_dev_t;
 
 

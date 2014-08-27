@@ -29,7 +29,7 @@
 //#define I2C_10BIT_ADDR_MODE
 
 /* Enable the use of 16Bit Address memory register option   */
-#define I2C_16BIT_REG_OPTION
+//#define I2C_16BIT_REG_OPTION
 
 /* Method1 used for closing communication with master receiver */
 #define I2C_CLOSECOM_METHOD1 
@@ -103,8 +103,7 @@ void i2c_timeout(void);
 
 /* DO NOT MODIFY THESE VALUES ---------------------------------------------------------*/
 #define I2C_TIMEOUT_DEFAULT        ((uint32_t)0xFFFFFFFF)
-#define I2C_TIMEOUT_MIN            ((uint32_t)0x00000001)
-#define I2C_TIMEOUT_DETECTED       ((uint32_t)0x00000000)
+
 
 
 /*-----------NVIC Group Priority-------------*/

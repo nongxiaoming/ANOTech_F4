@@ -62,7 +62,7 @@ void MPU6050_DeInit(void)
 static uint32_t MPU6050_Status (void)
 {
   MPU6050_i2c.buffer = RT_NULL ;    
-  MPU6050_i2c.addr = (uint32_t)MPU6050_ADDRESS;
+  MPU6050_i2c.addr = (uint32_t)MPU6050_DEFAULT_ADDRESS;
   
   return I2C_IsDeviceReady(&MPU6050_i2c);
 }
@@ -111,7 +111,7 @@ uint8_t MPU6050_ReadReg(uint8_t RegName)
   /* Configure transfer parameters */  
   MPU6050_i2c.bytes_to_read = 1;
   MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_ADDRESS;
+  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
   MPU6050_i2c.reg   = (uint32_t)RegName;
   
   /* Read Operation */
@@ -149,7 +149,7 @@ uint8_t MPU6050_WriteReg(uint8_t RegName, uint8_t RegValue)
   /* Configure transfer parameters */  
   MPU6050_i2c.bytes_to_write = 1;
   MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_ADDRESS;
+  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
   MPU6050_i2c.reg    = (uint32_t)RegName;
   
   /* Write Operation */
@@ -294,7 +294,7 @@ int16_t MPU6050_ReadTemp(void)
   /* Configure transfer parameters */  
   MPU6050_i2c.bytes_to_read = 2;
   MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_ADDRESS;
+  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
   MPU6050_i2c.reg   = (uint32_t)MPU6050_RA_TEMP_OUT_H;
   
   /* Read Operation */
@@ -326,7 +326,7 @@ uint8_t MPU6050ReadID(void)
   /* Configure transfer parameters */  
   MPU6050_i2c.bytes_to_read = 1;
   MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_ADDRESS;
+  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
   MPU6050_i2c.reg    = (uint32_t)MPU6050_RA_WHO_AM_I;
   
   /* Read Operation */
@@ -348,7 +348,7 @@ void MPU6050ReadData(short *Data)
   /* Configure transfer parameters */  
   MPU6050_i2c.bytes_to_read = 14;
   MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_ADDRESS;
+  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
   MPU6050_i2c.reg   = (uint32_t)MPU6050_RA_ACCEL_XOUT_H;
   
   /* Read Operation */
@@ -374,7 +374,7 @@ void MPU6050ReadGyro(short *gyroData)
   /* Configure transfer parameters */  
   MPU6050_i2c.bytes_to_read = 2;
   MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_ADDRESS;
+  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
   MPU6050_i2c.reg   = (uint32_t)MPU6050_RA_GYRO_ZOUT_H;
   
   /* Read Operation */

@@ -26,7 +26,6 @@ typedef enum
 /**
   * @brief  Internal register Memory
   */
-#define MPU6050_ADDRESS         0xD0
 #define MPU6050_ADDRESS_AD0_LOW     0x68 // address pin low (GND), default for InvenSense evaluation board
 #define MPU6050_ADDRESS_AD0_HIGH    0x69 // address pin high (VCC)
 #define MPU6050_DEFAULT_ADDRESS     MPU6050_ADDRESS_AD0_LOW

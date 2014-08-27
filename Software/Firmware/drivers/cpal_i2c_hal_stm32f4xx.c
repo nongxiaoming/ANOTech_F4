@@ -474,11 +474,6 @@ void I2C_HAL_ITDeInit(i2c_dev_t* i2c_dev)
 #endif /* I2C_DMA_PROGMODEL */
 }
 
-
-
-/*================== CPAL_I2C1_IRQhandler ==================*/
-
-
 /**
   * @brief  This function handles I2C1 interrupt request.
   * @param  None. 
