@@ -1177,22 +1177,22 @@ static uint32_t I2C_MASTER_TXE_Handle(I2CDev_InitTypeDef* i2c_dev)
   if (i2c_dev->mode == I2C_PROGMODEL_INTERRUPT)
   {                   
     /* If Buffer end */
-    if (i2c_dev->pTransferTx->NumData != 0)
+    if (i2c_dev->bytes_to_write != 0)
     {   
       /* Call TX UserCallback */
       I2C_TX_UserCallback(i2c_dev);
       
       /* Write Byte */
-      i2c_dev->I2C->DR = *(i2c_dev->pTransferTx->pbBuffer); 
+      i2c_dev->I2C->DR = *(i2c_dev->buffer); 
       
       /* Decrement remaining number of data */
-      i2c_dev->pTransferTx->NumData--;
+      i2c_dev->bytes_to_write--;
       
       /* If Buffer end */
-      if (i2c_dev->pTransferTx->NumData != 0)
+      if (i2c_dev->bytes_to_write != 0)
       {  
         /* Point to next data */
-        i2c_dev->pTransferTx->pbBuffer++;      
+        i2c_dev->buffer++;      
       }
     }    
     else 
