@@ -113,8 +113,6 @@ void i2c_timeout(void);
 #define I2C_IT_OFFSET_PREPRIO          0      /* I2C PREEMPTION PRIORITY Offset */ 
 
 
-
-
 //#define I2C_DEBUG
 
 #ifdef I2C_DEBUG
@@ -123,8 +121,6 @@ void i2c_timeout(void);
 #else
 #define I2C_LOG(Str)                   ((void)0)
 #endif /* I2C_DEBUG */   
-
-
 
 #endif /* __I2C_CONF_H */
 

@@ -216,32 +216,7 @@ extern "C" {
 #define DMA_RESET_CMD(clk,cmd)                 RCC_AHB1PeriphResetCmd((clk),(cmd)) 
   
   
-/*========= DMA =========*/
-  
-/* DMA channels enable/disable */  
 
-#define I2C_HAL_ENABLE_DMATX(device)      I2C_DMA_TX_Stream[(device)]->CR |= DMA_CR_EN  
-  
-#define I2C_HAL_DISABLE_DMATX(device)     I2C_DMA_TX_Stream[(device)]->CR &= ~DMA_CR_EN 
-  
-#define I2C_HAL_ENABLE_DMARX(device)      I2C_DMA_RX_Stream[(device)]->CR |= DMA_CR_EN  
-
-#define I2C_HAL_DISABLE_DMARX(device)     I2C_DMA_RX_Stream[(device)]->CR &= ~DMA_CR_EN
-
-/* DMA interrupts enable/disable */  
-
-#define I2C_HAL_ENABLE_DMATX_TCIT(device)      I2C_DMA_TX_Stream[(device)]->CR |= DMA_IT_TC
-  
-#define I2C_HAL_ENABLE_DMATX_HTIT(device)      I2C_DMA_TX_Stream[(device)]->CR |= DMA_IT_HT
-  
-#define I2C_HAL_ENABLE_DMATX_TEIT(device)      I2C_DMA_TX_Stream[(device)]->CR |= DMA_IT_TE
-  
-#define I2C_HAL_ENABLE_DMARX_TCIT(device)      I2C_DMA_RX_Stream[(device)]->CR |= DMA_IT_TC
-  
-#define I2C_HAL_ENABLE_DMARX_HTIT(device)      I2C_DMA_RX_Stream[(device)]->CR |= DMA_IT_HT
-  
-#define I2C_HAL_ENABLE_DMARX_TEIT(device)      I2C_DMA_RX_Stream[(device)]->CR |= DMA_IT_TE
-  
 /* DMA interrupts flag management */
 
   
@@ -281,60 +256,14 @@ extern "C" {
                                                  ((device)->DMA->LIFCR = (I2C_DMA_RX_TC_FLAG[(device)->dev]|\
                                                  I2C_DMA_RX_HT_FLAG[(device)->dev] | I2C_DMA_RX_TE_FLAG[(device)->dev]))
                                                    
-/* Get DMA data counter */  
-
-#define I2C_HAL_DMATX_GET_CNDT(device)    (uint32_t)(I2C_DMA_TX_Stream[(device)]->NDTR)
  
-#define I2C_HAL_DMARX_GET_CNDT(device)    (uint32_t)(I2C_DMA_RX_Stream[(device)]->NDTR) 
- 
-
-     
-  
-
-/* I2C flags management */
-
-  
-#define I2C_HAL_GET_SB(device)            (uint16_t)(I2C_DEVICE[(device)]->SR1 & I2C_SR1_SB) 
-
-#define I2C_HAL_GET_ADDR(device)          (uint16_t)(I2C_DEVICE[(device)]->SR1 & I2C_SR1_ADDR) 
-  
-#define I2C_HAL_GET_ADD10(device)         (uint16_t)(I2C_DEVICE[(device)]->SR1 & I2C_SR1_ADD10) 
-  
-#define I2C_HAL_GET_STOPF(device)         (uint16_t)(I2C_DEVICE[(device)]->SR1 & I2C_SR1_STOPF) 
-  
-#define I2C_HAL_GET_BTF(device)           (uint16_t)(I2C_DEVICE[(device)]->SR1 & I2C_SR1_BTF) 
-  
-#define I2C_HAL_GET_TXE(device)           (uint16_t)(I2C_DEVICE[(device)]->SR1 & I2C_SR1_TXE) 
-  
-#define I2C_HAL_GET_RXNE(device)          (uint16_t)(I2C_DEVICE[(device)]->SR1 & I2C_SR1_RXNE) 
-  
-#define I2C_HAL_GET_BUSY(device)          (uint16_t)(I2C_DEVICE[(device)]->SR2 & I2C_SR2_BUSY) 
-  
-#define I2C_HAL_GET_GENCALL(device)       (uint16_t)(I2C_DEVICE[(device)]->SR2 & I2C_SR2_GENCALL) 
-  
-#define I2C_HAL_GET_DUALF(device)         (uint16_t)(I2C_DEVICE[(device)]->SR2 & I2C_SR2_DUALF) 
-
-#define I2C_HAL_GET_TRA(device)           (uint16_t)(I2C_DEVICE[(device)]->SR2 & I2C_SR2_TRA)
-  
-#define I2C_HAL_GET_OVR(device)           (uint16_t)(I2C_DEVICE[(device)]->SR1 & I2C_SR1_OVR) 
-  
-
-
-/* Exported functions --------------------------------------------------------*/    
-  
-/*========= I2CX IRQHandler =========*/      
-
-   uint32_t I2C1_EV_IRQHandler(void); /*<!I2C1 Event Interrupt Handler : handle Communication of I2C1 Device */
-   uint32_t I2C1_ER_IRQHandler(void); /*<!I2C1 Error Interrupt Handler : handle error of I2C1 Device if Error Interrupt enabled */
+uint32_t I2C1_EV_IRQHandler(void); 
+uint32_t I2C1_ER_IRQHandler(void);
 
    
 #ifdef I2C_DMA_PROGMODEL   
-
-/*========= DMA I2CX IRQHandler =========*/      
-
-   uint32_t I2C1_DMA_TX_IRQHandler(void); /*<!I2C1 DMA TX Interrupt Handler : handle data Transmission with DMA */
-   uint32_t I2C1_DMA_RX_IRQHandler(void); /*<!I2C1 DMA RX Interrupt Handler : handle data reception with DMA */
-
+uint32_t I2C1_DMA_TX_IRQHandler(void);
+uint32_t I2C1_DMA_RX_IRQHandler(void); 
 #endif /* I2C_DMA_PROGMODEL */   
 
 /*========= Hardware Abstraction Layer local =========*/      
