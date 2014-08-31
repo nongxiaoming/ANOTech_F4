@@ -60,8 +60,6 @@
 #define I2C_RX_UserCallback        (void)
 //#define I2C_TXTC_UserCallback      (void)    
 //#define I2C_RXTC_UserCallback      (void)
-/* Communication with EEPROM is handled by I2C_TXTC_UserCallback and I2C_RXTC_UserCallback.
-   To enable these UserCallback related define must be commented */
 
 /* DMA Transfer UserCallbacks : To use a DMA Transfer UserCallbacks comment the relative define */
 #define I2C_DMATXTC_UserCallback   (void)  
@@ -75,9 +73,6 @@
 #define I2C_GENCALL_UserCallback   (void)
 #define I2C_DUALF_UserCallback     (void)
 
-/* CriticalSectionCallback : Call User callback for critical section (should typically disable interrupts) */
-#define EnterCriticalSection_UserCallback        __disable_irq
-#define ExitCriticalSection_UserCallback         __enable_irq
 
 /* Listen mode Callback : Used to handle communication in listen mode */
 #define I2C_SLAVE_READ_UserCallback        (void)    
