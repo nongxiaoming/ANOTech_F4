@@ -202,19 +202,6 @@ extern "C" {
  #define I2C1_DMA_RX_TE_FLAG        DMA_FLAG_TEIF0     
    
 
-  
-
-#define I2C_RCC_RESET(clk)                     RCC_APB1PeriphResetCmd((clk),ENABLE);\
-                                                 RCC_APB1PeriphResetCmd((clk),DISABLE)  
-
-  
-
-    
-#define DMA_CLK_CMD(clk,cmd)                   RCC_AHB1PeriphClockCmd((clk),(cmd))
-
-#define DMA_RESET_CMD(clk,cmd)                 RCC_AHB1PeriphResetCmd((clk),(cmd)) 
-  
-  
 
 /* DMA interrupts flag management */
 

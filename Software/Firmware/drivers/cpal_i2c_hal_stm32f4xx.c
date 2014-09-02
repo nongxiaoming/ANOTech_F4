@@ -80,8 +80,9 @@ const uint32_t I2C_DMA_RX_TE_FLAG[1] = {I2C1_DMA_RX_TE_FLAG};
 void I2C_HAL_CLKInit(I2C_DevTypeDef Device)
 {    
   /* Reset I2Cx device clock in order to avoid non-cleared error flags */
- I2C_RCC_RESET(I2C_CLK [Device]);
-  
+  RCC_APB1PeriphResetCmd(I2C_CLK [Device],ENABLE);
+  RCC_APB1PeriphResetCmd(I2C_CLK [Device],DISABLE);  
+
   /* Enable I2Cx device clock */
  RCC_APB1PeriphClockCmd(I2C_CLK [Device], ENABLE);  
 }
@@ -95,8 +96,9 @@ void I2C_HAL_CLKInit(I2C_DevTypeDef Device)
 void I2C_HAL_CLKDeInit(I2C_DevTypeDef Device)
 {   
   /* Reset I2Cx device clock in order to avoid non-cleared error flags */
-  I2C_RCC_RESET(I2C_CLK[Device]);
-  
+  RCC_APB1PeriphResetCmd(I2C_CLK[Device],ENABLE);
+  RCC_APB1PeriphResetCmd(I2C_CLK[Device],DISABLE);
+	
   /* Disable I2Cx device clock */
   RCC_APB1PeriphClockCmd(I2C_CLK[Device], DISABLE);   
 }
@@ -185,7 +187,7 @@ void I2C_HAL_GPIODeInit(I2C_DevTypeDef Device)
 void I2C_HAL_DMAInit(i2c_dev_t* i2c_dev)
 {  
   /* Enable I2Cx DMA */
-  DMA_CLK_CMD(I2C_DMA_CLK[i2c_dev->dev], ENABLE);
+  RCC_AHB1PeriphClockCmd(I2C_DMA_CLK[i2c_dev->dev], ENABLE);
   
   /* I2Cx Common Stream Configuration */
   I2C_DMA_InitStructure.DMA_Channel = i2c_dev->DMA_Channel;
