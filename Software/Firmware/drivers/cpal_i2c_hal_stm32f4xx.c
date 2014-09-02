@@ -83,7 +83,7 @@ void I2C_HAL_CLKInit(I2C_DevTypeDef Device)
  I2C_RCC_RESET(I2C_CLK [Device]);
   
   /* Enable I2Cx device clock */
- I2C_CLK_CMD(I2C_CLK [Device], ENABLE);  
+ RCC_APB1PeriphClockCmd(I2C_CLK [Device], ENABLE);  
 }
 
 
@@ -98,7 +98,7 @@ void I2C_HAL_CLKDeInit(I2C_DevTypeDef Device)
   I2C_RCC_RESET(I2C_CLK[Device]);
   
   /* Disable I2Cx device clock */
-  I2C_CLK_CMD(I2C_CLK[Device], DISABLE);   
+  RCC_APB1PeriphClockCmd(I2C_CLK[Device], DISABLE);   
 }
 
 
@@ -112,7 +112,7 @@ void I2C_HAL_GPIOInit(I2C_DevTypeDef Device)
   GPIO_InitTypeDef GPIO_InitStructure;
   
   /* Enable I2Cx SCL and SDA Pin Clock */
-  I2C_GPIO_CLK_CMD((I2C_SCL_GPIO_CLK[Device] | I2C_SDA_GPIO_CLK[Device]), ENABLE); 
+   RCC_AHB1PeriphClockCmd(I2C_SCL_GPIO_CLK[Device] | I2C_SDA_GPIO_CLK[Device], ENABLE); 
   
   /* Connect PXx to I2C_SCL */
   GPIO_PinAFConfig((GPIO_TypeDef*)I2C_SCL_GPIO_PORT[Device],I2C_SCL_GPIO_PINSOURCE[Device],I2C_AF[Device]);

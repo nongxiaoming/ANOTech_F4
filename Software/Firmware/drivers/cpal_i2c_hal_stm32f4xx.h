@@ -203,13 +203,12 @@ extern "C" {
    
 
   
-#define I2C_CLK_CMD(clk,cmd)                   RCC_APB1PeriphClockCmd((clk),(cmd))
 
 #define I2C_RCC_RESET(clk)                     RCC_APB1PeriphResetCmd((clk),ENABLE);\
                                                  RCC_APB1PeriphResetCmd((clk),DISABLE)  
 
   
-#define I2C_GPIO_CLK_CMD(clk,cmd)              RCC_AHB1PeriphClockCmd((clk),(cmd))
+
     
 #define DMA_CLK_CMD(clk,cmd)                   RCC_AHB1PeriphClockCmd((clk),(cmd))
 
