@@ -11,10 +11,6 @@
                                                  }\
                                                  i2c_dev->timeout = I2C_TIMEOUT_DEFAULT
                                                    
-
-#ifdef I2C_DMA_PROGMODEL
-
-
 extern const uint32_t I2C_DMA_TX_TC_FLAG[];
 extern const uint32_t I2C_DMA_RX_TC_FLAG[];
 
@@ -23,7 +19,6 @@ extern const uint32_t I2C_DMA_RX_HT_FLAG[];
 
 extern const uint32_t I2C_DMA_TX_TE_FLAG[];
 extern const uint32_t I2C_DMA_RX_TE_FLAG[];
-#endif /* I2C_DMA_PROGMODEL */
 
 
 I2C_InitTypeDef I2C_InitStructure;
@@ -32,12 +27,7 @@ I2C_InitTypeDef I2C_InitStructure;
 
   static uint32_t I2C_MASTER_START_Handle(i2c_dev_t* i2c_dev); /* Handle Master SB Interrupt event */  
   static uint32_t I2C_MASTER_ADDR_Handle(i2c_dev_t* i2c_dev);  /* Handle Master ADDR Interrupt event */
- #ifdef I2C_IT_PROGMODEL
-  static uint32_t I2C_MASTER_TXE_Handle(i2c_dev_t* i2c_dev);   /* Handle Master TXE Interrupt event */
- #endif /* I2C_IT_PROGMODEL */
- #if defined (I2C_IT_PROGMODEL) || defined (I2C_DMA_1BYTE_CASE)
   static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev);  /* Handle Master RXNE Interrupt event */
- #endif /* I2C_IT_PROGMODEL || I2C_DMA_1BYTE_CASE */
  
 
 static uint32_t I2C_Timeout (i2c_dev_t* i2c_dev);
@@ -66,28 +56,6 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     - If I2C_State is I2C_STATE_DISABLED:  
       Perform the Initialization routines                                   */    
     
-#ifndef I2C_DMA_PROGMODEL
-    if (i2c_dev->ProgModel == PROGMODEL_DMA) 
-    {
-      /* update State */
-      i2c_dev->state = I2C_STATE_ERROR;
-      
-      /* Exit Init function */
-      return RT_ERROR;
-    }
-#endif /* I2C_DMA_PROGMODEL */
-    
-#ifndef I2C_IT_PROGMODEL
-    if (i2c_dev->mode == I2C_PROGMODEL_INTERRUPT) 
-    {
-      /* update State */
-      i2c_dev->state = I2C_STATE_ERROR;
-      
-      /* Exit Init function */
-      return RT_ERROR;
-    }
-#endif /* I2C_IT_PROGMODEL */ 
-        
     /* Disable I2Cx Device */
     i2c_dev->I2C->CR1 &= ~I2C_CR1_PE;
 		
@@ -102,8 +70,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     I2C_HAL_CLKDeInit(i2c_dev->dev);
     
     I2C_LOG("\n\rLOG : I2C Device Clock Deinit");
-    
-#ifdef I2C_DMA_PROGMODEL    
+      
     /* Deinitialize DMA Channels */
     if (i2c_dev->mode == I2C_PROGMODEL_DMA)
     {
@@ -111,7 +78,6 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       
       I2C_LOG("\n\rLOG : I2C Device DMA Deinit");  
     } 
-#endif /* I2C_DMA_PROGMODEL */
     
     /* Initialize I2Cx Clock */
     I2C_HAL_CLKInit(i2c_dev->dev);
@@ -166,7 +132,6 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       I2C_LOG("\n\rLOG : I2C Device NACK Own Address Mode Enabled");
     }
     
-#ifdef I2C_DMA_PROGMODEL 
     /* If DMA Programming model is selected*/
     if (i2c_dev->mode == I2C_PROGMODEL_DMA) 
     {
@@ -175,7 +140,6 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       
       I2C_LOG("\n\rLOG : I2C Device DMA Init");  
     }
-#endif /* I2C_DMA_PROGMODEL */
     
     /* Initialize I2Cx Interrupts */
     I2C_HAL_ITInit(i2c_dev);
@@ -240,15 +204,13 @@ uint32_t I2CDev_DeInit(i2c_dev_t* i2c_dev)
     
     I2C_LOG("\n\rLOG : I2C Device Clock Deinit");       
     
-#ifdef I2C_DMA_PROGMODEL
-  
+
     if (i2c_dev->mode == I2C_PROGMODEL_DMA)
     {
       I2C_HAL_DMADeInit(i2c_dev);
       
       I2C_LOG("\n\rLOG : I2C Device DMA Deinit");  
     } 
-#endif /* I2C_DMA_PROGMODEL */
     
     I2C_HAL_ITDeInit(i2c_dev);
     
@@ -292,7 +254,7 @@ uint32_t I2CDev_StructInit(i2c_dev_t* i2c_dev)
   
   /* Initialize i2c_dev parameter to their default values */
   i2c_dev-> direction     = I2C_DIRECTION_TXRX;                  /* Transmitter and Receiver direction selected */
-  i2c_dev-> mode     = I2C_PROGMODEL_DMA;                   /* DMA Programming Model selected */
+  i2c_dev-> mode     =      I2C_PROGMODEL_DMA;                   /* DMA Programming Model selected */
   i2c_dev-> state         = I2C_STATE_DISABLED;                  /* Device Disabled */
   i2c_dev-> error     =   I2C_ERR_NONE;                    /* No Device Error */
   i2c_dev-> options      = ((uint32_t)0x00000000);               /* No Options selected */
@@ -456,8 +418,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
       /* Wait until Busy flag is reset */ 
       I2C_TIMEOUT(!((uint16_t)(i2c_dev->I2C->SR2 & I2C_SR2_BUSY) ), I2C_TIMEOUT_BUSY);
     }
-
-#ifdef I2C_DMA_1BYTE_CASE              
+           
     /* If One byte transfer with DMA programming model */
     if ((i2c_dev->mode == I2C_PROGMODEL_DMA) 
        && (i2c_dev->bytes_to_read == 1))
@@ -468,7 +429,6 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
       /* Change ProgModel to Interrupt */
       i2c_dev->mode = I2C_PROGMODEL_INTERRUPT;
     }
-#endif /* I2C_DMA_1BYTE_CASE */
       
     /* If "No Memory Address" Option Bit is not selected and Master Mode selected */
     if ((i2c_dev->options & OPT_NO_MEM_ADDR) == 0)
@@ -490,30 +450,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
         
         /* Wait until ADDR flag is reset */ 
         I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_ADDR), I2C_TIMEOUT_ADDR);        
-      }      
-  #ifdef I2C_10BIT_ADDR_MODE
-      /* If 10 Bit Addressing Mode */
-      else
-      {
-        /* Declare local variable that contains Address Header */
-        uint8_t I2CHeaderAddress = 0x00;
-        
-        /* Calculate Header Address  */ 
-        I2CHeaderAddress = (uint8_t)((((i2c_dev->pTransferRx->Addr1) & 0xFF00) >>7) | 0xF0);
-        
-        /* Send Header Address */ 
-        i2c_dev->I2C->DR = I2CHeaderAddress;   
-        
-        /* Wait until ADD10 flag is set */ 
-        I2C_TIMEOUT(I2C_HAL_GET_ADD10(i2c_dev->Dev), I2C_Timeout_ADD10); 
-        
-        /* Send Slave address with bit0 reset for write */
-        i2c_dev->I2C->DR = (uint8_t)(i2c_dev->pTransferRx->Addr1);   
-        
-        /* Wait until ADDR flag is set */ 
-        I2C_TIMEOUT(I2C_HAL_GET_ADDR(i2c_dev->Dev), I2C_TIMEOUT_ADDR);         
-      }      
-  #endif /* I2C_10BIT_ADDR_MODE */     
+      }          
       
       I2C_LOG("\n\rLOG : I2C Device Target Address Sent ");
       
@@ -684,21 +621,11 @@ uint32_t I2C_EV_IRQHandler(i2c_dev_t* i2c_dev)
       return I2C_MASTER_ADDR_Handle(i2c_dev);              
     }
     
- #ifdef I2C_IT_PROGMODEL   
-    /* If TXE event */
-    if (((I2CFlagStatus & (uint16_t)I2C_EVT_TXE) != 0) && (i2c_dev->state == I2C_STATE_BUSY_TX))
-    {  
-      return I2C_MASTER_TXE_Handle(i2c_dev); 
-    }
- #endif /* I2C_IT_PROGMODEL */
-    
- #if defined (I2C_IT_PROGMODEL) || defined (I2C_DMA_1BYTE_CASE)    
     /* If RXNE event */
     if (((I2CFlagStatus & (uint16_t)I2C_EVT_RXNE) != 0) && (i2c_dev->state == I2C_STATE_BUSY_RX))
     { 
       return I2C_MASTER_RXNE_Handle(i2c_dev); 
     }      
- #endif /* I2C_IT_PROGMODEL || I2C_DMA_1BYTE_CASE */
 
   return RT_EOK;
 }
@@ -735,10 +662,6 @@ uint32_t I2C_ER_IRQHandler(i2c_dev_t* i2c_dev)
       
       I2C_LOG("\n\r I2C Device Software reset"); 
       
-#ifdef USE_MULTIPLE_ERROR_CALLBACK
-      /* Call Bus Error UserCallback */
-      I2C_BERR_UserCallback(i2c_dev->Dev);    
-#endif /* USE_MULTIPLE_ERROR_CALLBACK */
     }
     
     /* If Arbitration Loss error occurred --------------------------------------*/
@@ -751,40 +674,21 @@ uint32_t I2C_ER_IRQHandler(i2c_dev_t* i2c_dev)
       i2c_dev->I2C->CR1 &= ~I2C_CR1_SWRST;   
       
       I2C_LOG("\n\r I2C Device Software reset"); 
-      
-#ifdef USE_MULTIPLE_ERROR_CALLBACK    
-      /* Call Arbitration Lost UserCallback */ 
-      I2C_ARLO_UserCallback(i2c_dev->Dev);  
-#endif /* USE_MULTIPLE_ERROR_CALLBACK */    
+       
     }
     
-    /* If Overrun error occurred -----------------------------------------------*/
+    /* If Overrun error occurred */
     if ((i2c_dev->error & I2C_ERR_OVR) != 0)
     {
       I2C_LOG("\n\rERROR : I2C Device OVR");
       
-      /* No I2C software reset is performed here in order to allow user to get back
-      the last data received correctly */
-      
-#ifdef USE_MULTIPLE_ERROR_CALLBACK    
-      /* Call Overrun error UserCallback */
-      I2C_OVR_UserCallback(i2c_dev->Dev);
-#endif /* USE_MULTIPLE_ERROR_CALLBACK */    
     }
         
-    /* If Acknowledge Failure error occurred -----------------------------------*/
+    /* If Acknowledge Failure error occurred */
     if ((i2c_dev->error & I2C_ERR_AF) != 0)
     {        
       I2C_LOG("\n\rERROR : I2C Device AF"); 
-      
-      /* No I2C software reset is performed here in order to allow user to recover 
-      communication */
-      
-#ifdef USE_MULTIPLE_ERROR_CALLBACK    
-      /* Call Acknowledge Failure UserCallback */
-      I2C_AF_UserCallback(i2c_dev->Dev);  
-#endif /* USE_MULTIPLE_ERROR_CALLBACK */   
-      
+       
     }   
         
     /* USE_SINGLE_ERROR_CALLBACK is defined in conf.h file */
@@ -797,7 +701,6 @@ uint32_t I2C_ER_IRQHandler(i2c_dev_t* i2c_dev)
 }
 
 
-#ifdef I2C_DMA_PROGMODEL
 /**
   * @brief  Handle I2C DMA TX interrupt request when DMA programming Model is 
   *         used for data transmission. 
@@ -974,7 +877,6 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
   
   return RT_EOK;
 }
-#endif /* I2C_DMA_PROGMODEL */
 
 /**
   * @brief  This function Manages I2C Timeouts when Timeout occurred.
@@ -1165,87 +1067,6 @@ static uint32_t I2C_MASTER_ADDR_Handle(i2c_dev_t* i2c_dev)
   return RT_EOK;
 }
 
- #ifdef I2C_IT_PROGMODEL
-/**
-  * @brief  Handles Master transmission (TXE) interrupt event.
-  * @param  i2c_dev: Pointer to the peripheral configuration structure.
-  * @retval RT_EOK or RT_ERROR. 
-  */
-static uint32_t I2C_MASTER_TXE_Handle(I2CDev_InitTypeDef* i2c_dev)
-{ 
-  /* If Interrupt Programming Model selected */
-  if (i2c_dev->mode == I2C_PROGMODEL_INTERRUPT)
-  {                   
-    /* If Buffer end */
-    if (i2c_dev->bytes_to_write != 0)
-    {   
-      /* Call TX UserCallback */
-      I2C_TX_UserCallback(i2c_dev);
-      
-      /* Write Byte */
-      i2c_dev->I2C->DR = *(i2c_dev->buffer); 
-      
-      /* Decrement remaining number of data */
-      i2c_dev->bytes_to_write--;
-      
-      /* If Buffer end */
-      if (i2c_dev->bytes_to_write != 0)
-      {  
-        /* Point to next data */
-        i2c_dev->buffer++;      
-      }
-    }    
-    else 
-    {
-      /* No Stop Condition Generation option bit not selected */ 
-      if ((i2c_dev->options & OPT_I2C_NOSTOP) == 0)
-      {      
-        /* Generate Stop Condition */
-       i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;
-        
-        I2C_LOG("\n\r\n\rLOG <I2C_EV_IRQHandler> : I2C Device Master IT");
-        
-        I2C_LOG("\n\rLOG : I2C Device Generates Stop");        
-      }
-      
-      I2C_LOG("\n\rLOG : I2C Device TX Complete");
-      
-      /* Disable EVENT Interrupt */
-      i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
-      
-      I2C_LOG("\n\rLOG : I2C Device TX EVT IT Disabled");
-      
-      /* Disable Buffer interrupt */
-      I2C_HAL_DISABLE_BUFIT(i2c_dev->Dev);
-      
-      I2C_LOG("\n\rLOG : I2C Device TX BUFF IT Disabled");
-      
-      /* No Stop Condition Generation option bit not selected */ 
-      if ((i2c_dev->options & OPT_I2C_NOSTOP) == 0)
-      { 
-        /* Wait until BTF and TXE flags are reset */ 
-        I2C_TIMEOUT(!((uint16_t)(i2c_dev->I2C->SR1 & I2C_STATUS1_EVT_MASK) & (I2C_SR1_BTF | I2C_SR1_TXE )), I2C_TIMEOUT_BUSY);
-      }
-      else
-      {
-        /* Wait until BTF flags is reset */ 
-        I2C_TIMEOUT(!((uint16_t)(i2c_dev->I2C->SR1 & I2C_STATUS1_EVT_MASK) & I2C_SR1_TXE ), I2C_TIMEOUT_BUSY);
-        
-      }
-      
-      /* Update State to I2C_STATE_READY */
-      i2c_dev->state = I2C_STATE_READY; 
-      
-      /* Call TX Transfer complete Callback */
-      I2C_TXTC_UserCallback(i2c_dev);       
-    }        
-  }
-  
-  return RT_EOK;
-}
- #endif /* I2C_IT_PROGMODEL */
-
- #if defined (I2C_IT_PROGMODEL) || defined (I2C_DMA_1BYTE_CASE)
 /**
   * @brief  Handles Master reception (RXNE flag) interrupt event.
   * @param  i2c_dev: Pointer to the peripheral configuration structure.
@@ -1416,7 +1237,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
   }  
   return RT_EOK;
 }
- #endif /* I2C_IT_PROGMODEL || I2C_DMA_1BYTE_CASE */
+
 
 /**
   * @brief  This function Configure I2C DMA and Interrupts before starting transfer phase.
@@ -1429,8 +1250,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev)
   /* Switch the value of ProgModel */
   switch (i2c_dev->mode)
   { 
-    
-#if defined (I2C_IT_PROGMODEL) || defined (I2C_DMA_1BYTE_CASE)          
+           
   case I2C_PROGMODEL_INTERRUPT:
    
     /* Enable BUFFER Interrupt*/
@@ -1439,10 +1259,8 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev)
     I2C_LOG("\n\rLOG : I2C Device BUFF IT Enabled"); 
     
     return RT_EOK;
-#endif /* I2C_IT_PROGMODEL || I2C_DMA_1BYTE_CASE */
     
-#ifdef I2C_DMA_PROGMODEL
-    
+
     case I2C_PROGMODEL_DMA:
     
      /* Disable EVENT Interrupt */
@@ -1479,7 +1297,6 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev)
     }
     
     return RT_EOK; 
-#endif /* I2C_DMA_PROGMODEL */
       
   default:
     

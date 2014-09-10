@@ -247,10 +247,8 @@ uint32_t I2C1_EV_IRQHandler(void);
 uint32_t I2C1_ER_IRQHandler(void);
 
    
-#ifdef I2C_DMA_PROGMODEL   
 uint32_t I2C1_DMA_TX_IRQHandler(void);
-uint32_t I2C1_DMA_RX_IRQHandler(void); 
-#endif /* I2C_DMA_PROGMODEL */   
+uint32_t I2C1_DMA_RX_IRQHandler(void);   
 
 /*========= Hardware Abstraction Layer local =========*/      
 
@@ -263,7 +261,6 @@ uint32_t I2C1_DMA_RX_IRQHandler(void);
   void I2C_HAL_GPIODeInit(I2C_DevTypeDef Device); /*<!This function deinitialize the IO pins used by the I2C device 
                                                             (configured to their default state) */ 
   
-#ifdef I2C_DMA_PROGMODEL
   void I2C_HAL_DMAInit(i2c_dev_t* i2c_dev); /*<!This function enable the DMA clock and initialize 
                                                                                                             needed DMA Streams used by the I2C device   */
   
@@ -276,7 +273,6 @@ uint32_t I2C1_DMA_RX_IRQHandler(void);
   void I2C_HAL_DMADeInit(i2c_dev_t* i2c_dev); /*<!This function deinitialize the DMA Stream used 
                                                                                             by I2C Device (Configure them to their default
                                                                                             values). DMA clock is not disabled */
-#endif /* I2C_DMA_PROGMODEL */
   
   void I2C_HAL_ITInit(i2c_dev_t* i2c_dev); /*<!This function configures NVIC and interrupts used 
                                                                                                                                                  by I2C Device according to enabled options */  
