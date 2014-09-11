@@ -431,16 +431,6 @@
               <FilePath>drivers\board.c</FilePath>
             </File>
             <File>
-              <FileName>cpal_i2c_hal_stm32f4xx.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\cpal_i2c_hal_stm32f4xx.c</FilePath>
-            </File>
-            <File>
-              <FileName>cpal_usercallback.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\cpal_usercallback.c</FilePath>
-            </File>
-            <File>
               <FileName>drv_i2c.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\drv_i2c.c</FilePath>
