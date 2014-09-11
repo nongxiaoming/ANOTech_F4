@@ -25,6 +25,7 @@
 #include "stm32f4xx.h"
 #include <rtthread.h>
 #include "board.h"
+#include "drv_i2c.h"
 
 /** @addtogroup STM32F4_Discovery_Peripheral_Examples
   * @{
@@ -109,6 +110,26 @@ void SVC_Handler(void)
   */
 void DebugMon_Handler(void)
 {
+}
+
+void I2C1_EV_IRQHandler(void)
+{  
+ I2C_EV_IRQHandler(&i2c1_dev);
+}
+
+void I2C1_ER_IRQHandler(void)
+{
+  I2C_ER_IRQHandler(&i2c1_dev);
+}
+
+void I2C1_DMA_TX_IRQHandler(void)
+{
+  I2C_DMA_TX_IRQHandler(&i2c1_dev);
+}
+
+void I2C1_DMA_RX_IRQHandler(void)
+{
+  I2C_DMA_RX_IRQHandler(&i2c1_dev);
 }
 
 /**

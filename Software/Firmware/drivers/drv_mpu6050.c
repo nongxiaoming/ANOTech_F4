@@ -1,70 +1,18 @@
-
 #include "drv_mpu6050.h"
-#include "stdio.h"
 
-
-
-  
 
 uint8_t MPU6050_Buffer[14] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}; 
 
-extern i2c_dev_t  MPU6050_i2c;
 
+__IO uint32_t  MPU6050_Timeout = 50000; 
 
-__IO uint32_t  MPU6050_Timeout = MPU6050_TIMEOUT; 
-
-/* Private function prototypes -----------------------------------------------*/
-
-
-/* Private functions ---------------------------------------------------------*/
-
-/**
-  * @brief  Configure the MPU6050_I2C.
-  * @param  None
-  * @retval None
-  */
-void MPU6050_Config(void)
-{
-  MPU6050_StructInit ();
-  MPU6050_Init();
-}
-
-/**
-  * @brief  Deinitialize the MPU6050_I2C.
-  * @param  one
-  * @retval None
-  */
-void MPU6050_DeInit(void)
-{
-    /* Initialize CPAL peripheral */
-  I2CDev_DeInit(&MPU6050_i2c);
-}
-
-/**
-  * @brief  Initializes the MPU6050_I2C.
-  * @param  None
-  * @retval None
-  */
- void MPU6050_StructInit(void)
-{
-  /* Set CPAL structure parameters to their default values */  
-  I2CDev_StructInit(&MPU6050_i2c);
-    
-  /* Set I2C clock speed */
-  MPU6050_i2c.I2C_InitStruct->I2C_ClockSpeed = I2C_SPEED;
-  			 
-  /* Select DMA programming model and activate TX_DMA_TC and RX_DMA_TC interrupts */
-  MPU6050_i2c.mode = I2C_PROGMODEL_DMA;
-  MPU6050_i2c.options  = 0;
-
-}
 
 static uint32_t MPU6050_Status (void)
 {
-  MPU6050_i2c.buffer = RT_NULL ;    
-  MPU6050_i2c.addr = (uint32_t)MPU6050_DEFAULT_ADDRESS;
+  i2c1_dev.buffer = RT_NULL ;    
+  i2c1_dev.addr = (uint32_t)MPU6050_DEFAULT_ADDRESS;
   
-  return I2C_IsDeviceReady(&MPU6050_i2c);
+  return I2C_IsDeviceReady(&i2c1_dev);
 }
 
 /**
@@ -106,18 +54,18 @@ uint8_t MPU6050_ReadReg(uint8_t RegName)
   MPU6050_Buffer[1] = 0;
   
   /* Disable all options */
-  MPU6050_i2c.options = 0;
+  i2c1_dev.options = 0;
 
   /* Configure transfer parameters */  
-  MPU6050_i2c.bytes_to_read = 1;
-  MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
-  MPU6050_i2c.reg   = (uint32_t)RegName;
+  i2c1_dev.bytes_to_read = 1;
+  i2c1_dev.buffer = MPU6050_Buffer ;
+  i2c1_dev.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
+  i2c1_dev.reg   = (uint32_t)RegName;
   
   /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
+  if(I2C_Read(&i2c1_dev) == RT_EOK)
   {
-    while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
+    while ((i2c1_dev.state != I2C_STATE_READY) && (i2c1_dev.state != I2C_STATE_ERROR) )
     { rt_thread_delay(1); }
   }
   
@@ -138,37 +86,37 @@ uint8_t MPU6050_ReadReg(uint8_t RegName)
   * @param  RegValue: value to be written to MPU6050 register.  
   * @retval None
   */
-uint8_t MPU6050_WriteReg(uint8_t RegName, uint8_t RegValue)
+rt_err_t MPU6050_WriteReg(uint8_t RegName, uint8_t RegValue)
 {   
   MPU6050_Buffer[0] = RegValue;
      
   /* Disable all options */
-  MPU6050_i2c.options = 0;
+  i2c1_dev.options = 0;
   
   
   /* Configure transfer parameters */  
-  MPU6050_i2c.bytes_to_write = 1;
-  MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
-  MPU6050_i2c.reg    = (uint32_t)RegName;
+  i2c1_dev.bytes_to_write = 1;
+  i2c1_dev.buffer = MPU6050_Buffer ;
+  i2c1_dev.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
+  i2c1_dev.reg    = (uint32_t)RegName;
   
   /* Write Operation */
-  if(I2C_Write(&MPU6050_i2c) == RT_EOK)
+  if(I2C_Write(&i2c1_dev) == RT_EOK)
   {
-    while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
+    while ((i2c1_dev.state != I2C_STATE_READY) && (i2c1_dev.state != I2C_STATE_ERROR) )
     { rt_thread_delay(1); }
     
-    if (MPU6050_i2c.state == I2C_STATE_ERROR)
+    if (i2c1_dev.state == I2C_STATE_ERROR)
     {
-      return MPU6050_FAIL;
+      return RT_ERROR;
     }
   }
   else
   {
-    return MPU6050_FAIL;
+    return RT_ERROR;
   }
   
-  return MPU6050_OK;
+  return RT_EOK;
 }
 /**************************实现函数********************************************
 *函数原型:		u8 IICwriteBit(u8 dev, u8 reg, u8 bitNum, u8 data)
@@ -276,41 +224,6 @@ void MPU6050_setDLPF(uint8_t mode)
 {
 	IICwriteBits(MPU6050_RA_CONFIG, MPU6050_CFG_DLPF_CFG_BIT, MPU6050_CFG_DLPF_CFG_LENGTH, mode);
 }
-/**
-  * @brief  Read Temperature register of MPU6050: double temperature value.
-  * @param  None
-  * @retval MPU6050 measured temperature value.
-  */
-int16_t MPU6050_ReadTemp(void)
-{   
-  int16_t tmp = 0;
-  
-  MPU6050_Buffer[0] = 0;
-  MPU6050_Buffer[1] = 0;
-  
-  /* Disable all options */
-  MPU6050_i2c.options = 0;
-
-  /* Configure transfer parameters */  
-  MPU6050_i2c.bytes_to_read = 2;
-  MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
-  MPU6050_i2c.reg   = (uint32_t)MPU6050_RA_TEMP_OUT_H;
-  
-  /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
-  {
-    while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
-    { }
-  }
-  
-  /* Store MPU6050_I2C received data */
-  tmp = (uint16_t)(MPU6050_Buffer[0] << 8);
-  tmp |= MPU6050_Buffer[1];    
-  
-  /* Return Temperature value */
-  return tmp;
-}
 
 
 uint8_t MPU6050ReadID(void)
@@ -320,19 +233,19 @@ uint8_t MPU6050ReadID(void)
   MPU6050_Buffer[1] = 0;
   
   /* Disable all options */
-  MPU6050_i2c.options = 0;
+  i2c1_dev.options = 0;
 
 
   /* Configure transfer parameters */  
-  MPU6050_i2c.bytes_to_read = 1;
-  MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
-  MPU6050_i2c.reg    = (uint32_t)MPU6050_RA_WHO_AM_I;
+  i2c1_dev.bytes_to_read = 1;
+  i2c1_dev.buffer = MPU6050_Buffer ;
+  i2c1_dev.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
+  i2c1_dev.reg    = (uint32_t)MPU6050_RA_WHO_AM_I;
   
   /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
+  if(I2C_Read(&i2c1_dev) == RT_EOK)
   {
-    while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
+    while ((i2c1_dev.state != I2C_STATE_READY) && (i2c1_dev.state != I2C_STATE_ERROR) )
     { rt_thread_delay(1);}
   }
 
@@ -342,19 +255,19 @@ uint8_t MPU6050ReadID(void)
 void MPU6050ReadData(short *Data)
 {
   /* Disable all options */
-  MPU6050_i2c.options = 0;
+  i2c1_dev.options = 0;
 
   
   /* Configure transfer parameters */  
-  MPU6050_i2c.bytes_to_read = 14;
-  MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
-  MPU6050_i2c.reg   = (uint32_t)MPU6050_RA_ACCEL_XOUT_H;
+  i2c1_dev.bytes_to_read = 14;
+  i2c1_dev.buffer = MPU6050_Buffer ;
+  i2c1_dev.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
+  i2c1_dev.reg   = (uint32_t)MPU6050_RA_ACCEL_XOUT_H;
   
   /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
+  if(I2C_Read(&i2c1_dev) == RT_EOK)
   {
-    while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
+    while ((i2c1_dev.state != I2C_STATE_READY) && (i2c1_dev.state != I2C_STATE_ERROR) )
     { }
   }
     Data[0] = (MPU6050_Buffer[0] << 8) | MPU6050_Buffer[1];
@@ -369,18 +282,18 @@ void MPU6050ReadGyro(short *gyroData)
 {
   //  uint8_t buf[6];
      /* Disable all options */
-  MPU6050_i2c.options = 0;
+  i2c1_dev.options = 0;
 
   /* Configure transfer parameters */  
-  MPU6050_i2c.bytes_to_read = 2;
-  MPU6050_i2c.buffer = MPU6050_Buffer ;
-  MPU6050_i2c.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
-  MPU6050_i2c.reg   = (uint32_t)MPU6050_RA_GYRO_ZOUT_H;
+  i2c1_dev.bytes_to_read = 2;
+  i2c1_dev.buffer = MPU6050_Buffer ;
+  i2c1_dev.addr   = (uint32_t)MPU6050_DEFAULT_ADDRESS;
+  i2c1_dev.reg   = (uint32_t)MPU6050_RA_GYRO_ZOUT_H;
   
   /* Read Operation */
-  if(I2C_Read(&MPU6050_i2c) == RT_EOK)
+  if(I2C_Read(&i2c1_dev) == RT_EOK)
   {
-    while ((MPU6050_i2c.state != I2C_STATE_READY) && (MPU6050_i2c.state != I2C_STATE_ERROR) )
+    while ((i2c1_dev.state != I2C_STATE_READY) && (i2c1_dev.state != I2C_STATE_ERROR) )
     { }
   }
     gyroData[0] = (MPU6050_Buffer[0] << 8) | MPU6050_Buffer[1];
@@ -396,8 +309,9 @@ void MPU6050ReadGyro(short *gyroData)
 void MPU6050_Init(void)
 {
 		u8 id=0;
-  /* Initialize CPAL peripheral */
-  I2CDev_Init(&MPU6050_i2c);
+  /* Initialize i2c peripheral */
+	I2CDev_StructInit(&i2c1_dev);	
+  I2CDev_Init(&i2c1_dev);
 
 	while(id!=0x68)
 		{
@@ -424,14 +338,14 @@ static void thread_entry(void* parameter)
 {
 short temp[7];
 uint8_t id=0;
-	MPU6050_Config();
+	MPU6050_Init();
   while(1)
   {
-	id=MPU6050ReadID();
+	  id=MPU6050ReadID();
 		rt_kprintf("id=0x%X\r\n",id);
 	  MPU6050ReadData(temp);
 		rt_kprintf("data:%d,%d,%d,%d,%d,%d,%d\r\n",temp[0],temp[1],temp[2],temp[3],temp[4],temp[5],temp[6]);
-		rt_thread_delay(100);
+		rt_thread_delay(50);
   }
 }
 int mpu6050_thread_init(void)

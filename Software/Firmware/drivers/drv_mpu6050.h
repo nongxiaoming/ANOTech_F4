@@ -1,28 +1,9 @@
 
-#ifndef __STM32_EVAL_I2C_TSENSOR_CPAL_H
-#define __STM32_EVAL_I2C_TSENSOR_CPAL_H
+#ifndef __MPU6050_H
+#define __MPU6050_H
 
 #include "drv_i2c.h"
-   
-/** 
-  * @brief  TSENSOR Status  
-  */ 
-typedef enum
-{
-  MPU6050_OK = 0,
-  MPU6050_FAIL
-}MPU6050_Status_TypDef;
-
-
-#define MPU6050_i2c                i2c1_dev   
-
-
-#define I2C_SPEED                        400000
-
-
-   
-#define MPU6050_TIMEOUT        ((uint32_t)0x3FFFF)
-
+      
 /**
   * @brief  Internal register Memory
   */
@@ -386,7 +367,7 @@ void MPU6050_Config(void);
  void MPU6050_Init(void);
 int16_t MPU6050_ReadTemp(void);
 uint8_t MPU6050_ReadReg(uint8_t RegName);
-uint8_t MPU6050_WriteReg(uint8_t RegName, uint8_t RegValue);
+rt_err_t MPU6050_WriteReg(uint8_t RegName, uint8_t RegValue);
 
 uint8_t MPU6050_ShutDown(FunctionalState NewState);
 
@@ -394,7 +375,7 @@ void MPU6050ReadTemp(short *tempData);
 void MPU6050ReadGyro(short *gyroData);
 void MPU6050ReadData(short *accData);
 
-u8 MPU6050ReadID(void);
+uint8_t MPU6050ReadID(void);
 
 
 #endif 
