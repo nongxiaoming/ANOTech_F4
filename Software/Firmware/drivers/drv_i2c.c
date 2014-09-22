@@ -757,7 +757,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
   i2c_dev->timeout = I2C_TIMEOUT_DEFAULT; 
   I2C_LOG("LOG <I2C_DMA_TX_IRQHandler> : I2C Device TX DMA \n");
   /* If TC interrupt */
-  if((I2C_HAL_GET_DMATX_TCIT(i2c_dev)) != 0)
+  if((I2C_GET_DMATX_TCIT(i2c_dev)) != 0)
   {  
     I2C_LOG("LOG : I2C Device TX Complete\n");
     /* Update remaining number of data */
@@ -787,12 +787,12 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
       } 
   }
   /* If HT interrupt */
-  else if ((I2C_HAL_GET_DMATX_HTIT(i2c_dev)) != 0)
+  else if ((I2C_GET_DMATX_HTIT(i2c_dev)) != 0)
   {         
     I2C_LOG("LOG : I2C Device TX DMA Half Transfer \n");
   }  
   /* If TE interrupt */
-  else if ((I2C_HAL_GET_DMATX_TEIT(i2c_dev)) != 0)
+  else if ((I2C_GET_DMATX_TEIT(i2c_dev)) != 0)
   { 
     I2C_LOG("ERROR : I2C Device TX DMA Transfer Error \n");
     /* Update State to I2C_STATE_ERROR */
@@ -801,7 +801,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
     i2c_dev->bytes_to_write = i2c_dev->DMA_TX_Stream->NDTR; 
   }  
    /* Clear DMA Interrupt Flag */
-    I2C_HAL_CLEAR_DMATX_IT(i2c_dev);
+    I2C_CLEAR_DMATX_IT(i2c_dev);
   
   return RT_EOK;
 }
@@ -820,7 +820,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
   
   I2C_LOG("LOG <I2C_DMA_RX_IRQHandler> : I2C Device RX DMA \n");
   /* If TC interrupt */
-  if ((I2C_HAL_GET_DMARX_TCIT(i2c_dev)) != 0)
+  if ((I2C_GET_DMARX_TCIT(i2c_dev)) != 0)
   {   
     I2C_LOG("\n\rLOG : I2C Device RX Complete");
     /* Update remaining number of data */
@@ -846,12 +846,12 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
     }
   }  
   /* If HT interrupt */
-  else if ((I2C_HAL_GET_DMARX_HTIT(i2c_dev)) != 0)
+  else if ((I2C_GET_DMARX_HTIT(i2c_dev)) != 0)
   {   
     I2C_LOG("LOG : I2C Device RX DMA Half Transfer\n");
   }  
   /* If TE interrupt */
-  else if ((I2C_HAL_GET_DMARX_TEIT(i2c_dev)) != 0)
+  else if ((I2C_GET_DMARX_TEIT(i2c_dev)) != 0)
   {   
     I2C_LOG("ERROR : I2C Device RX DMA Transfer Error \n");
     /* Update State to I2C_STATE_ERROR */
@@ -861,7 +861,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
 
   }
   /* Clear DMA Interrupt Flag */
-  I2C_HAL_CLEAR_DMARX_IT(i2c_dev);
+  I2C_CLEAR_DMARX_IT(i2c_dev);
   
   return RT_EOK;
 }
