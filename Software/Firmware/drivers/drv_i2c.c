@@ -278,7 +278,7 @@ void I2C_DMARXConfig(i2c_dev_t* i2c_dev)
   */
 uint32_t I2CDev_Init(i2c_dev_t* i2c_dev) 
 {
-  I2C_LOG("\n\r\n\rLOG <I2CDev_Init> : I2C Device Init");
+  I2C_LOG("LOG <I2CDev_Init> : I2C Device Init\n");
   
   /* If I2C_State is not BUSY */
   if ((i2c_dev->state == I2C_STATE_READY) 
@@ -292,17 +292,17 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     /* Initialize I2Cx GPIO */
     GPIO_Configuration(i2c_dev);
     
-    I2C_LOG("\n\rLOG : I2C Device IOs Init");     
+    I2C_LOG("LOG : I2C Device IOs Init\n");     
 	       
     /* Enable I2Cx Device */
     i2c_dev->I2C->CR1 |= I2C_CR1_PE ;
 		 
-    I2C_LOG("\n\rLOG : I2C Device Enabled"); 
+    I2C_LOG("LOG : I2C Device Enabled\n"); 
     
     /* Initialize I2Cx device */
     I2C_Configuration(i2c_dev);
     
-    I2C_LOG("\n\rLOG : I2C Device Config");   
+    I2C_LOG("LOG : I2C Device Config\n");   
     
 
     /* If NACK Slave Own Address option bit selected */
@@ -311,7 +311,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       /* Disable Acknowledgement of own Address */
       	i2c_dev->I2C->CR1 &= ~I2C_CR1_ACK;
 
-      I2C_LOG("\n\rLOG : I2C Device NACK Own Address Mode Enabled");
+      I2C_LOG("LOG : I2C Device NACK Own Address Mode Enabled\n");
     }
     
     /* If DMA Programming model is selected*/
@@ -320,18 +320,18 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       /* Initialize I2Cx DMA Channels */
       DMA_Configuration(i2c_dev);
       
-      I2C_LOG("\n\rLOG : I2C Device DMA Init");  
+      I2C_LOG("LOG : I2C Device DMA Init\n");  
     }
     
     /* Initialize I2Cx Interrupts */
     NVIC_Configuration(i2c_dev);
     
-    I2C_LOG("\n\rLOG : I2C Device IT Init");
+    I2C_LOG("LOG : I2C Device IT Init\n");
     
     /* Update State to I2C_STATE_READY */
     i2c_dev->state = I2C_STATE_READY;
     
-    I2C_LOG("\n\rLOG : I2C Device Ready"); 
+    I2C_LOG("LOG : I2C Device Ready\n"); 
     
     
     return RT_EOK;
@@ -339,7 +339,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
   /* If State is BUSY (a transaction is still on going) Exit Init function */
   else 
   {
-    I2C_LOG("\n\rERROR : I2C Device Busy"); 
+    I2C_LOG("ERROR : I2C Device Busy\n"); 
     
     return RT_ERROR; 
   }
@@ -361,7 +361,7 @@ uint32_t I2CDev_StructInit(i2c_dev_t* i2c_dev)
   i2c_dev-> options  = ((uint32_t)0x00000000);               /* No Options selected */
   i2c_dev-> timeout  = ((uint32_t)I2C_TIMEOUT_DEFAULT); /* Set timeout value to I2C_TIMEOUT_DEFAULT */
   
-  I2C_LOG("\n\r\n\rLOG <I2CDev_StructInit> : I2C Device Structure set to Default Value"); 
+  I2C_LOG("LOG <I2CDev_StructInit> : I2C Device Structure set to Default Value\n"); 
   
   return RT_EOK;
 }
@@ -884,6 +884,7 @@ uint32_t I2C_Timeout (i2c_dev_t* i2c_dev)
   
 	  /* Generate STOP */
   i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;
+	
   I2CDev_Init(i2c_dev);
 	
 	return 0;
@@ -914,7 +915,7 @@ static uint32_t I2C_MASTER_START_Handle(i2c_dev_t* i2c_dev)
       /* Update State to I2C_STATE_BUSY */
       i2c_dev->state = I2C_STATE_BUSY_RX; 
       
-      I2C_LOG("\n\rLOG : I2C Device Busy RX");
+      I2C_LOG("LOG : I2C Device Busy RX\n");
     }    
     /* If Master run as Transmitter */
     else
