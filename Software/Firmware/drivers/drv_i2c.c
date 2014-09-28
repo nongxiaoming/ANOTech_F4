@@ -2,8 +2,7 @@
 
 
 
-																								 
-                                                   
+																								                                                  
 i2c_dev_t i2c1_dev = {                  I2C1,
 	                                      I2C1_DMA,
 	                                      I2C1_DMA_CHANNEL,
@@ -333,7 +332,6 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     
     I2C_LOG("LOG : I2C Device Ready\n"); 
     
-    
     return RT_EOK;
   }    
   /* If State is BUSY (a transaction is still on going) Exit Init function */
@@ -355,11 +353,12 @@ uint32_t I2CDev_StructInit(i2c_dev_t* i2c_dev)
 {   
   
   /* Initialize i2c_dev parameter to their default values */
-  i2c_dev-> direction     = I2C_DIRECTION_TXRX;                  /* Transmitter and Receiver direction selected */  i2c_dev-> mode     =      I2C_PROGMODEL_DMA;                   /* DMA Programming Model selected */
-  i2c_dev-> state    = I2C_STATE_DISABLED;                  /* Device Disabled */
-  i2c_dev-> error    =   I2C_ERR_NONE;                    /* No Device Error */
-  i2c_dev-> options  = ((uint32_t)0x00000000);               /* No Options selected */
-  i2c_dev-> timeout  = ((uint32_t)I2C_TIMEOUT_DEFAULT); /* Set timeout value to I2C_TIMEOUT_DEFAULT */
+  i2c_dev-> direction     = I2C_DIRECTION_TXRX;          /* Transmitter and Receiver direction selected */  
+	i2c_dev-> mode     =      I2C_PROGMODEL_DMA;           /* DMA Programming Model selected */
+  i2c_dev-> state    = I2C_STATE_DISABLED;               /* Device Disabled */
+  i2c_dev-> error    =   I2C_ERR_NONE;                   /* No Device Error */
+  i2c_dev-> options  = ((uint32_t)0x00000000);           /* No Options selected */
+  i2c_dev-> timeout  = ((uint32_t)I2C_TIMEOUT_DEFAULT);  /* Set timeout value to I2C_TIMEOUT_DEFAULT */
   
   I2C_LOG("LOG <I2CDev_StructInit> : I2C Device Structure set to Default Value\n"); 
   
