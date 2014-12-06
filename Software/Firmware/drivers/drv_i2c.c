@@ -2,7 +2,12 @@
 
 
 
-																								                                                  
+#ifdef I2C_DEBUG
+#define i2c_debug(fmt, ...)  rt_kprintf(fmt, ##__VA_ARGS__)
+#else
+#define i2c_debug(fmt, ...)
+#endif																								 
+                                                   
 i2c_dev_t i2c1_dev = {                  I2C1,
 	                                      I2C1_DMA,
 	                                      I2C1_DMA_CHANNEL,
@@ -277,7 +282,7 @@ void I2C_DMARXConfig(i2c_dev_t* i2c_dev)
   */
 uint32_t I2CDev_Init(i2c_dev_t* i2c_dev) 
 {
-  I2C_LOG("LOG <I2CDev_Init> : I2C Device Init\n");
+  i2c_debug("\n\r\n\rLOG <I2CDev_Init> : I2C Device Init");
   
   /* If I2C_State is not BUSY */
   if ((i2c_dev->state == I2C_STATE_READY) 
@@ -291,17 +296,17 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
     /* Initialize I2Cx GPIO */
     GPIO_Configuration(i2c_dev);
     
-    I2C_LOG("LOG : I2C Device IOs Init\n");     
+    i2c_debug("\n\rLOG : I2C Device IOs Init");     
 	       
     /* Enable I2Cx Device */
     i2c_dev->I2C->CR1 |= I2C_CR1_PE ;
 		 
-    I2C_LOG("LOG : I2C Device Enabled\n"); 
+    i2c_debug("\n\rLOG : I2C Device Enabled"); 
     
     /* Initialize I2Cx device */
     I2C_Configuration(i2c_dev);
     
-    I2C_LOG("LOG : I2C Device Config\n");   
+    i2c_debug("\n\rLOG : I2C Device Config");   
     
 
     /* If NACK Slave Own Address option bit selected */
@@ -310,7 +315,7 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       /* Disable Acknowledgement of own Address */
       	i2c_dev->I2C->CR1 &= ~I2C_CR1_ACK;
 
-      I2C_LOG("LOG : I2C Device NACK Own Address Mode Enabled\n");
+      i2c_debug("\n\rLOG : I2C Device NACK Own Address Mode Enabled");
     }
     
     /* If DMA Programming model is selected*/
@@ -319,25 +324,25 @@ uint32_t I2CDev_Init(i2c_dev_t* i2c_dev)
       /* Initialize I2Cx DMA Channels */
       DMA_Configuration(i2c_dev);
       
-      I2C_LOG("LOG : I2C Device DMA Init\n");  
+      i2c_debug("\n\rLOG : I2C Device DMA Init");  
     }
     
     /* Initialize I2Cx Interrupts */
     NVIC_Configuration(i2c_dev);
     
-    I2C_LOG("LOG : I2C Device IT Init\n");
+    i2c_debug("\n\rLOG : I2C Device IT Init");
     
     /* Update State to I2C_STATE_READY */
     i2c_dev->state = I2C_STATE_READY;
     
-    I2C_LOG("LOG : I2C Device Ready\n"); 
+    i2c_debug("\n\rLOG : I2C Device Ready"); 
     
     return RT_EOK;
   }    
   /* If State is BUSY (a transaction is still on going) Exit Init function */
   else 
   {
-    I2C_LOG("ERROR : I2C Device Busy\n"); 
+    i2c_debug("\n\rERROR : I2C Device Busy"); 
     
     return RT_ERROR; 
   }
@@ -360,7 +365,7 @@ uint32_t I2CDev_StructInit(i2c_dev_t* i2c_dev)
   i2c_dev-> options  = ((uint32_t)0x00000000);           /* No Options selected */
   i2c_dev-> timeout  = ((uint32_t)I2C_TIMEOUT_DEFAULT);  /* Set timeout value to I2C_TIMEOUT_DEFAULT */
   
-  I2C_LOG("LOG <I2CDev_StructInit> : I2C Device Structure set to Default Value\n"); 
+  i2c_debug("\n\r\n\rLOG <I2CDev_StructInit> : I2C Device Structure set to Default Value"); 
   
   return RT_EOK;
 }
@@ -380,21 +385,21 @@ uint32_t I2C_Write(i2c_dev_t* i2c_dev)
      || (i2c_dev->state == I2C_STATE_READY_TX) 
      || (i2c_dev->state == I2C_STATE_READY_RX))
   {
-    I2C_LOG("ERROR : I2C Device Busy\n"); 
+    i2c_debug("ERROR : I2C Device Busy\n"); 
     
     return RT_ERROR;
   }  
   /* If State is I2C_STATE_DISABLED (device is not initialized) Exit Write function */  
   else if (i2c_dev->state == I2C_STATE_DISABLED)  
   {
-    I2C_LOG("ERROR : I2C Device Not Initialized\n"); 
+    i2c_debug("ERROR : I2C Device Not Initialized\n"); 
     
     return RT_ERROR;
   }  
   /* If State is I2C_STATE_ERROR (Error occurred ) */
   else if (i2c_dev->state == I2C_STATE_ERROR)
   {
-    I2C_LOG("ERROR : I2C Device Error\n"); 
+    i2c_debug("ERROR : I2C Device Error\n"); 
     
     return RT_ERROR;
   }  
@@ -411,7 +416,7 @@ uint32_t I2C_Write(i2c_dev_t* i2c_dev)
       I2C_TIMEOUT(!((uint16_t)(i2c_dev->I2C->SR2 & I2C_SR2_BUSY) ), I2C_TIMEOUT_BUSY);
     } 
        
-      I2C_LOG("LOG : I2C Device Master\n");
+      i2c_debug("LOG : I2C Device Master\n");
       
       /* Generate Start */
 		  i2c_dev->I2C->CR1 |= I2C_CR1_START;
@@ -426,15 +431,15 @@ uint32_t I2C_Write(i2c_dev_t* i2c_dev)
             /* Update State to I2C_STATE_READY_TX */
       i2c_dev->state = I2C_STATE_READY_TX;
       
-      I2C_LOG("LOG : I2C Device Ready TX\n");
+      i2c_debug("LOG : I2C Device Ready TX\n");
       
-      I2C_LOG("LOG : I2C Device Generates Start\n");
+      i2c_debug("LOG : I2C Device Generates Start\n");
       
       /* Initialize timeout value */
       i2c_dev->timeout = rt_tick_get() + I2C_TIMEOUT_SB;
      
     /* Enable EVENT Interrupts*/
-    I2C_LOG("LOG : I2C Device EVT IT Enabled\n"); 
+    i2c_debug("LOG : I2C Device EVT IT Enabled\n"); 
     
      i2c_dev->I2C->CR2 |= I2C_CR2_ITEVTEN;
   }
@@ -456,21 +461,21 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
       || (i2c_dev->state == I2C_STATE_READY_TX)
       || (i2c_dev->state == I2C_STATE_READY_RX))
   {
-    I2C_LOG("ERROR : I2C Device Busy\n"); 
+    i2c_debug("ERROR : I2C Device Busy\n"); 
     
     return RT_ERROR;
   }  
   /* If State is I2C_STATE_DISABLED (device is not initialized) Exit Read function */  
   else if (i2c_dev->state == I2C_STATE_DISABLED)  
   {
-    I2C_LOG("ERROR : I2C Device Not Initialized\n"); 
+    i2c_debug("ERROR : I2C Device Not Initialized\n"); 
     
     return RT_ERROR;
   }  
   /* If State is I2C_STATE_ERROR (Error occurred ) */
   else if (i2c_dev->state == I2C_STATE_ERROR)
   {
-    I2C_LOG("ERROR : I2C Device Error\n"); 
+    i2c_debug("ERROR : I2C Device Error\n"); 
     
     return RT_ERROR;
   }  
@@ -501,7 +506,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
     /* If "No Memory Address" Option Bit is not selected and Master Mode selected */
     if ((i2c_dev->options & OPT_NO_MEM_ADDR) == 0)
     {       
-      I2C_LOG("LOG : I2C Device Master No Addr Mem Mode\n");
+      i2c_debug("LOG : I2C Device Master No Addr Mem Mode\n");
       
       /* Generate Start */
      i2c_dev->I2C->CR1 |= I2C_CR1_START;
@@ -515,7 +520,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
         /* Wait until ADDR flag is reset */ 
         I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_ADDR), I2C_TIMEOUT_ADDR);              
       
-      I2C_LOG("LOG : I2C Device Target Address Sent\n");
+      i2c_debug("LOG : I2C Device Target Address Sent\n");
       
       /* Clear ADDR flag: (Read SR1 followed by read of SR2), SR1 read operation is already done */
       i2c_dev->I2C->SR1;
@@ -554,23 +559,23 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
       }      
   #endif /* I2C_16BIT_REG_OPTION */
       
-      I2C_LOG("LOG : I2C Device Target Memory Address Sent\n");      
+      i2c_debug("LOG : I2C Device Target Memory Address Sent\n");      
     }        
     /* Update State to I2C_STATE_READY_RX */
     i2c_dev->state = I2C_STATE_READY_RX;
     
-    I2C_LOG("LOG : I2C Device Ready RX\n"); 
+    i2c_debug("LOG : I2C Device Ready RX\n"); 
         
       
       /* Generate Start */
      i2c_dev->I2C->CR1 |= I2C_CR1_START;
       
-     I2C_LOG("LOG : I2C Device Generates Start\n"); 
+     i2c_debug("LOG : I2C Device Generates Start\n"); 
          
       /* Initialize Timeout value */
       i2c_dev->timeout = rt_tick_get() + I2C_TIMEOUT_SB;          
          
-    I2C_LOG("LOG : I2C Device EVT IT Enabled\n");   
+    i2c_debug("LOG : I2C Device EVT IT Enabled\n");   
     
     /* Enable EVENT Interrupts*/
      i2c_dev->I2C->CR2 |= I2C_CR2_ITEVTEN;
@@ -592,7 +597,7 @@ uint32_t I2C_IsDeviceReady(i2c_dev_t* i2c_dev)
 { 
   __IO uint32_t Timeout = 0xFFFF;
    
-  I2C_LOG("LOG <I2C_DEVICE IsReady> : Wait until I2C Device is Ready\n");
+  i2c_debug("LOG <I2C_DEVICE IsReady> : Wait until I2C Device is Ready\n");
   
   /* Set  state to I2C_STATE_DISABLED */
   i2c_dev->state = I2C_STATE_BUSY;
@@ -638,12 +643,12 @@ uint32_t I2C_IsDeviceReady(i2c_dev_t* i2c_dev)
     /* Disable I2Cx Device */
     i2c_dev->I2C->CR1 &= ~I2C_CR1_PE;
     
-    I2C_LOG("LOG : I2C Device Disabled\n"); 
+    i2c_debug("LOG : I2C Device Disabled\n"); 
     
     /* Enable I2Cx Device */
     i2c_dev->I2C->CR1 |= I2C_CR1_PE ;
     
-    I2C_LOG("LOG : I2C Device Enabled\n"); 
+    i2c_debug("LOG : I2C Device Enabled\n"); 
     
     /* Enable ACK */
     i2c_dev->I2C->CR1 |= I2C_CR1_ACK;
@@ -654,7 +659,7 @@ uint32_t I2C_IsDeviceReady(i2c_dev_t* i2c_dev)
     /* Set state to ready */
     i2c_dev->state = I2C_STATE_READY;
    
-    I2C_LOG("LOG : I2C Target device Ready\n");  
+    i2c_debug("LOG : I2C Target device Ready\n");  
     
     return RT_EOK;
   }  
@@ -705,36 +710,36 @@ uint32_t I2C_ER_IRQHandler(i2c_dev_t* i2c_dev)
     i2c_dev->error = (uint16_t)(i2c_dev->I2C->SR1 & I2C_STATUS_ERR_MASK);
     /* Set Device state to I2C_STATE_ERROR */
     i2c_dev->state = I2C_STATE_ERROR;
-    I2C_LOG("ERROR <I2C_ErrorHandler> : I2C Device Error\n"); 
+    i2c_debug("ERROR <I2C_ErrorHandler> : I2C Device Error\n"); 
     /* Clear error flags that can be cleared by writing to SR register */
     i2c_dev->I2C->SR1 = ~I2C_STATUS_ERR_MASK;
     /* If Bus error occurred */
     if ((i2c_dev->error & I2C_ERR_BERR) != 0)
     {      
-      I2C_LOG("ERROR : I2C Device BERR\n"); 
+      i2c_debug("ERROR : I2C Device BERR\n"); 
       /* Generate I2C software reset in order to release SDA and SCL lines */
 			i2c_dev->I2C->CR1 |= I2C_CR1_SWRST; 
       i2c_dev->I2C->CR1 &= ~I2C_CR1_SWRST;    
-      I2C_LOG("I2C Device Software reset\n");    
+      i2c_debug("I2C Device Software reset\n");    
     }
     /* If Arbitration Loss error occurred */
     if ((i2c_dev->error & I2C_ERR_ARLO) != 0)
     {
-      I2C_LOG("ERROR : I2C Device ARLO\n"); 
+      i2c_debug("ERROR : I2C Device ARLO\n"); 
       /* Generate I2C software reset in order to release SDA and SCL lines */    
       i2c_dev->I2C->CR1 |= I2C_CR1_SWRST; 
       i2c_dev->I2C->CR1 &= ~I2C_CR1_SWRST;   
-      I2C_LOG("I2C Device Software reset\n"); 
+      i2c_debug("I2C Device Software reset\n"); 
     }
     /* If Overrun error occurred */
     if ((i2c_dev->error & I2C_ERR_OVR) != 0)
     {
-      I2C_LOG("ERROR : I2C Device OVR\n");
+      i2c_debug("ERROR : I2C Device OVR\n");
     }
     /* If Acknowledge Failure error occurred */
     if ((i2c_dev->error & I2C_ERR_AF) != 0)
     {        
-      I2C_LOG("ERROR : I2C Device AF\n");   
+      i2c_debug("ERROR : I2C Device AF\n");   
     }   
    /* Generate STOP */
   i2c_dev->I2C->CR1 |= I2C_CR1_STOP ;
@@ -754,11 +759,11 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
 {
   /* Reinitialize Timeout Value to default (no timeout initiated) */
   i2c_dev->timeout = I2C_TIMEOUT_DEFAULT; 
-  I2C_LOG("LOG <I2C_DMA_TX_IRQHandler> : I2C Device TX DMA \n");
+  i2c_debug("LOG <I2C_DMA_TX_IRQHandler> : I2C Device TX DMA \n");
   /* If TC interrupt */
   if((I2C_GET_DMATX_TCIT(i2c_dev)) != 0)
   {  
-    I2C_LOG("LOG : I2C Device TX Complete\n");
+    i2c_debug("LOG : I2C Device TX Complete\n");
     /* Update remaining number of data */
     i2c_dev->bytes_to_write = 0;
     /* If DMA Normal mode */
@@ -780,7 +785,7 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
         i2c_dev->DMA_TX_Stream->CR &= ~DMA_CR_EN ;        
         /* Disable EVENT Interrupt */
 				i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
-        I2C_LOG("LOG : I2C Device Master TX DMA Disabled\n");
+        i2c_debug("LOG : I2C Device Master TX DMA Disabled\n");
         /* Update State to I2C_STATE_READY */
         i2c_dev->state = I2C_STATE_READY; 
       } 
@@ -788,12 +793,12 @@ uint32_t I2C_DMA_TX_IRQHandler(i2c_dev_t* i2c_dev)
   /* If HT interrupt */
   else if ((I2C_GET_DMATX_HTIT(i2c_dev)) != 0)
   {         
-    I2C_LOG("LOG : I2C Device TX DMA Half Transfer \n");
+    i2c_debug("LOG : I2C Device TX DMA Half Transfer \n");
   }  
   /* If TE interrupt */
   else if ((I2C_GET_DMATX_TEIT(i2c_dev)) != 0)
   { 
-    I2C_LOG("ERROR : I2C Device TX DMA Transfer Error \n");
+    i2c_debug("ERROR : I2C Device TX DMA Transfer Error \n");
     /* Update State to I2C_STATE_ERROR */
     i2c_dev->state = I2C_STATE_ERROR; 
     /* Update remaining number of data */
@@ -817,11 +822,11 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
   /* Reinitialize Timeout Value to default (no timeout initiated) */
   i2c_dev->timeout = I2C_TIMEOUT_DEFAULT; 
   
-  I2C_LOG("LOG <I2C_DMA_RX_IRQHandler> : I2C Device RX DMA \n");
+  i2c_debug("LOG <I2C_DMA_RX_IRQHandler> : I2C Device RX DMA \n");
   /* If TC interrupt */
   if ((I2C_GET_DMARX_TCIT(i2c_dev)) != 0)
   {   
-    I2C_LOG("\n\rLOG : I2C Device RX Complete");
+    i2c_debug("\n\rLOG : I2C Device RX Complete");
     /* Update remaining number of data */
     i2c_dev->bytes_to_read = 0; 
     /* If DMA Normal model */
@@ -839,7 +844,7 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
 			  i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
         /* Disable DMA automatic NACK generation */
         i2c_dev->I2C->CR2 &= ~I2C_CR2_LAST ;  
-        I2C_LOG("LOG : I2C Device Master RX DMA Disabled\n");
+        i2c_debug("LOG : I2C Device Master RX DMA Disabled\n");
         /* Update State to I2C_STATE_READY */
         i2c_dev->state = I2C_STATE_READY; 
     }
@@ -847,12 +852,12 @@ uint32_t I2C_DMA_RX_IRQHandler(i2c_dev_t* i2c_dev)
   /* If HT interrupt */
   else if ((I2C_GET_DMARX_HTIT(i2c_dev)) != 0)
   {   
-    I2C_LOG("LOG : I2C Device RX DMA Half Transfer\n");
+    i2c_debug("LOG : I2C Device RX DMA Half Transfer\n");
   }  
   /* If TE interrupt */
   else if ((I2C_GET_DMARX_TEIT(i2c_dev)) != 0)
   {   
-    I2C_LOG("ERROR : I2C Device RX DMA Transfer Error \n");
+    i2c_debug("ERROR : I2C Device RX DMA Transfer Error \n");
     /* Update State to I2C_STATE_ERROR */
     i2c_dev->state = I2C_STATE_ERROR; 
     /* Update remaining number of data */
@@ -899,11 +904,11 @@ static uint32_t I2C_MASTER_START_Handle(i2c_dev_t* i2c_dev)
   /* Reinitialize Timeout Value */
   i2c_dev->timeout = I2C_TIMEOUT_DEFAULT;
   
-  I2C_LOG("LOG <I2C_EV_IRQHandler> : I2C Device Master IT\n"); 
+  i2c_debug("LOG <I2C_EV_IRQHandler> : I2C Device Master IT\n"); 
   
-  I2C_LOG("LOG : I2C Device Start Acknowledged\n"); 
+  i2c_debug("LOG : I2C Device Start Acknowledged\n"); 
   
-    I2C_LOG("LOG : I2C Device 7bit Address\n");
+    i2c_debug("LOG : I2C Device 7bit Address\n");
     /* Send Address */
     /* If Master run as receiver */
     if (i2c_dev->state == I2C_STATE_READY_RX)
@@ -914,7 +919,7 @@ static uint32_t I2C_MASTER_START_Handle(i2c_dev_t* i2c_dev)
       /* Update State to I2C_STATE_BUSY */
       i2c_dev->state = I2C_STATE_BUSY_RX; 
       
-      I2C_LOG("LOG : I2C Device Busy RX\n");
+      i2c_debug("\n\rLOG : I2C Device Busy RX");
     }    
     /* If Master run as Transmitter */
     else
@@ -925,10 +930,10 @@ static uint32_t I2C_MASTER_START_Handle(i2c_dev_t* i2c_dev)
       /* Update State to I2C_STATE_BUSY */
       i2c_dev->state = I2C_STATE_BUSY_TX; 
       
-      I2C_LOG("LOG : I2C Device Busy TX\n");
+      i2c_debug("LOG : I2C Device Busy TX\n");
     }
     
-    I2C_LOG("LOG : I2C Device Target Address Sent\n");
+    i2c_debug("LOG : I2C Device Target Address Sent\n");
     
     /* Initialize Timeout value */
     i2c_dev->timeout = rt_tick_get() + I2C_TIMEOUT_ADDR;             
@@ -1080,7 +1085,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
         /* Point to next data and Decrement remaining number of data */
         i2c_dev->bytes_to_read--;   
         
-        I2C_LOG("LOG <I2C_EV_IRQHandler> : I2C Device Master IT\n");
+        i2c_debug("LOG <I2C_EV_IRQHandler> : I2C Device Master IT\n");
       }
       
       /* Two bytes */
@@ -1109,7 +1114,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
         /*Decrement remaining number of data */
         i2c_dev->bytes_to_read--;           
         
-        I2C_LOG("LOG <I2C_EV_IRQHandler> : I2C Device Master IT\n");
+        i2c_debug("LOG <I2C_EV_IRQHandler> : I2C Device Master IT\n");
         
       }
       
@@ -1152,7 +1157,7 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
         /* Decrement remaining number of data */
         i2c_dev->bytes_to_read--;   
         
-        I2C_LOG("LOG <I2C_EV_IRQHandler> : I2C Device Master IT\n");
+        i2c_debug("LOG <I2C_EV_IRQHandler> : I2C Device Master IT\n");
         
       }          
     }     
@@ -1172,19 +1177,19 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
     /* If All data are received */
     if (i2c_dev->bytes_to_read == 0)
     {      
-      I2C_LOG("LOG : I2C Device Nack and Stop Generated \n");
+      i2c_debug("LOG : I2C Device Nack and Stop Generated \n");
       
-      I2C_LOG("LOG : I2C Device RX Complete\n"); 
+      i2c_debug("LOG : I2C Device RX Complete\n"); 
       
       /* Disable EVENT Interrupt */
 			i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
       
-      I2C_LOG("LOG : I2C Device RX EVT IT Disabled\n");
+      i2c_debug("LOG : I2C Device RX EVT IT Disabled\n");
       
       /* Disable Buffer interrupt */
        i2c_dev->I2C->CR2 &= ~I2C_CR2_ITBUFEN;
       
-      I2C_LOG("LOG : I2C Device RX BUFF IT Disabled\n");
+      i2c_debug("LOG : I2C Device RX BUFF IT Disabled\n");
       
       /* Clear BTF Flag */ 
       i2c_dev->I2C->SR1;
@@ -1233,7 +1238,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev)
     /* Enable BUFFER Interrupt*/
     i2c_dev->I2C->CR2 |= I2C_CR2_ITBUFEN;
     
-    I2C_LOG("LOG : I2C Device BUFF IT Enabled\n"); 
+    i2c_debug("LOG : I2C Device BUFF IT Enabled\n"); 
     
     return RT_EOK;
     
@@ -1257,7 +1262,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev)
       /* Enable TX DMA Channels */
 			i2c_dev->DMA_TX_Stream->CR |= DMA_CR_EN ; 
       
-      I2C_LOG("LOG : I2C Device DMA TX Enabled\n");       
+      i2c_debug("LOG : I2C Device DMA TX Enabled\n");       
     }    
      /* If a data reception will be performed */
     else if ((i2c_dev->state == I2C_STATE_BUSY_RX) || (i2c_dev->direction == I2C_DIRECTION_RX))
@@ -1279,7 +1284,7 @@ uint32_t I2C_Enable_DMA_IT (i2c_dev_t* i2c_dev)
     /* Update State to I2C_STATE_ERROR */
     i2c_dev->state = I2C_STATE_ERROR;
     
-    I2C_LOG("ERROR : I2C Device Error\n"); 
+    i2c_debug("ERROR : I2C Device Error\n"); 
     
     /* exit function */
     return RT_ERROR;

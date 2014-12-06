@@ -268,16 +268,6 @@ void i2c_timeout(void);
 #define I2C_IT_OFFSET_PREPRIO          0      /* I2C PREEMPTION PRIORITY Offset */ 
 
 
-//#define I2C_DEBUG
-
-#ifdef I2C_DEBUG
-#define I2C_LOG(Str)                   rt_kprintf(Str)
-#include <stdio.h>                     /* This header file must be included when using I2C_DEBUG option   */
-#else
-#define I2C_LOG(Str)                   ((void)0)
-#endif /* I2C_DEBUG */   
-
-
 #define I2C_TIMEOUT_DETECT                (i2c_dev->timeout < rt_tick_get())
 
 #define I2C_TIMEOUT(cmd, tout)         i2c_dev->timeout = rt_tick_get()+ (tout);\
