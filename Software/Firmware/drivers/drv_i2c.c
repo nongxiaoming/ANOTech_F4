@@ -378,34 +378,13 @@ uint32_t I2CDev_StructInit(i2c_dev_t* i2c_dev)
   */
 uint32_t I2C_Write(i2c_dev_t* i2c_dev)
 {      
-  
-  
-  /* If Device is Busy (a transaction is still on going) Exit Write function */
-  if (((i2c_dev->state & I2C_STATE_BUSY) != 0) 
-     || (i2c_dev->state == I2C_STATE_READY_TX) 
-     || (i2c_dev->state == I2C_STATE_READY_RX))
+  /* If State is not I2C_STATE_READY  */
+ if (i2c_dev->state != I2C_STATE_READY)
   {
-    i2c_debug("ERROR : I2C Device Busy\n"); 
-    
+    i2c_debug("error : I2C Device Error\n"); 
     return RT_ERROR;
-  }  
-  /* If State is I2C_STATE_DISABLED (device is not initialized) Exit Write function */  
-  else if (i2c_dev->state == I2C_STATE_DISABLED)  
-  {
-    i2c_debug("ERROR : I2C Device Not Initialized\n"); 
-    
-    return RT_ERROR;
-  }  
-  /* If State is I2C_STATE_ERROR (Error occurred ) */
-  else if (i2c_dev->state == I2C_STATE_ERROR)
-  {
-    i2c_debug("ERROR : I2C Device Error\n"); 
-    
-    return RT_ERROR;
-  }  
-  /* If State is I2C_STATE_READY ( Start Communication )*/
-  else
-  {   
+  }    
+ 
     /* Update State to I2C_STATE_BUSY */
     i2c_dev->state = I2C_STATE_BUSY;
     
@@ -442,7 +421,6 @@ uint32_t I2C_Write(i2c_dev_t* i2c_dev)
     i2c_debug("LOG : I2C Device EVT IT Enabled\n"); 
     
      i2c_dev->I2C->CR2 |= I2C_CR2_ITEVTEN;
-  }
   
    return RT_EOK;
 }
@@ -456,32 +434,13 @@ uint32_t I2C_Write(i2c_dev_t* i2c_dev)
 uint32_t I2C_Read(i2c_dev_t* i2c_dev)
 {    
   
-   /* If Device is Busy (a transaction is still on going) Exit Read function */
-   if (((i2c_dev->state & I2C_STATE_BUSY) != 0)
-      || (i2c_dev->state == I2C_STATE_READY_TX)
-      || (i2c_dev->state == I2C_STATE_READY_RX))
+  /* If State is not I2C_STATE_READY  */
+ if (i2c_dev->state != I2C_STATE_READY)
   {
-    i2c_debug("ERROR : I2C Device Busy\n"); 
-    
+    i2c_debug("error : I2C Device Error\n"); 
     return RT_ERROR;
   }  
-  /* If State is I2C_STATE_DISABLED (device is not initialized) Exit Read function */  
-  else if (i2c_dev->state == I2C_STATE_DISABLED)  
-  {
-    i2c_debug("ERROR : I2C Device Not Initialized\n"); 
-    
-    return RT_ERROR;
-  }  
-  /* If State is I2C_STATE_ERROR (Error occurred ) */
-  else if (i2c_dev->state == I2C_STATE_ERROR)
-  {
-    i2c_debug("ERROR : I2C Device Error\n"); 
-    
-    return RT_ERROR;
-  }  
-  /* If State is I2C_STATE_READY */
-  else
-  {
+
     /* Update State to I2C_STATE_BUSY */
     i2c_dev->state = I2C_STATE_BUSY;
    
@@ -579,7 +538,6 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
     
     /* Enable EVENT Interrupts*/
      i2c_dev->I2C->CR2 |= I2C_CR2_ITEVTEN;
-  }
   
   return RT_EOK;
 }
@@ -904,8 +862,6 @@ static uint32_t I2C_MASTER_START_Handle(i2c_dev_t* i2c_dev)
   /* Reinitialize Timeout Value */
   i2c_dev->timeout = I2C_TIMEOUT_DEFAULT;
   
-  i2c_debug("LOG <I2C_EV_IRQHandler> : I2C Device Master IT\n"); 
-  
   i2c_debug("LOG : I2C Device Start Acknowledged\n"); 
   
     i2c_debug("LOG : I2C Device 7bit Address\n");
@@ -957,12 +913,12 @@ static uint32_t I2C_MASTER_ADDR_Handle(i2c_dev_t* i2c_dev)
   }  
   else if (i2c_dev->state == I2C_STATE_BUSY_TX)
   {
-    /* Set 1ms timeout for each data transfer in case of DMA Tx mode */
+    /* Set 1 tick timeout for each data transfer in case of DMA Tx mode */
     i2c_dev->timeout = rt_tick_get() + i2c_dev->bytes_to_write;
   }  
   else if (i2c_dev->state == I2C_STATE_BUSY_RX)
   {
-    /* Set 1ms timeout for each data transfer in case of DMA Rx mode */ 
+    /* Set 1 tick timeout for each data transfer in case of DMA Rx mode */ 
     i2c_dev->timeout = rt_tick_get() + i2c_dev->bytes_to_read;
   }  
   else
@@ -1177,19 +1133,14 @@ static uint32_t I2C_MASTER_RXNE_Handle(i2c_dev_t* i2c_dev)
     /* If All data are received */
     if (i2c_dev->bytes_to_read == 0)
     {      
-      i2c_debug("LOG : I2C Device Nack and Stop Generated \n");
       
       i2c_debug("LOG : I2C Device RX Complete\n"); 
       
       /* Disable EVENT Interrupt */
 			i2c_dev->I2C->CR2 &= ~I2C_CR2_ITEVTEN ;
       
-      i2c_debug("LOG : I2C Device RX EVT IT Disabled\n");
-      
       /* Disable Buffer interrupt */
        i2c_dev->I2C->CR2 &= ~I2C_CR2_ITBUFEN;
-      
-      i2c_debug("LOG : I2C Device RX BUFF IT Disabled\n");
       
       /* Clear BTF Flag */ 
       i2c_dev->I2C->SR1;
