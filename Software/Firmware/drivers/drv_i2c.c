@@ -505,7 +505,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
         i2c_dev->I2C->DR = (uint8_t)(((i2c_dev->reg)& 0xFF00) >>8);  
         
         /* Wait until TXE flag is set */ 
-        I2C_TIMEOUT(I2C_HAL_GET_TXE(i2c_dev->dev), I2C_TIMEOUT_TXE);
+        I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_TXE), I2C_TIMEOUT_TXE); 
         
         /* Send LSB Register Address */
         i2c_dev->I2C->DR = (uint8_t)((i2c_dev->reg)& 0x00FF);  
@@ -514,7 +514,7 @@ uint32_t I2C_Read(i2c_dev_t* i2c_dev)
         i2c_dev->timeout = I2C_TIMEOUT_MIN + I2C_TIMEOUT_TXE;
         
         /* Wait until TXE flag is set */ 
-        I2C_TIMEOUT(I2C_HAL_GET_TXE(i2c_dev->dev), I2C_TIMEOUT_TXE); 
+        I2C_TIMEOUT((uint16_t)(i2c_dev->I2C->SR1 & I2C_SR1_TXE), I2C_TIMEOUT_TXE);  
       }      
   #endif /* I2C_16BIT_REG_OPTION */
       
