@@ -46,7 +46,8 @@ void mavlink_init(void)
 {
 	mavlink_system.sysid = 20;                   ///< ID 20 for this airplane
 	mavlink_system.compid = MAV_COMP_ID_IMU;     ///< The component sending the message is the IMU, it could be also a Linux process
-	mavlink_system.type = MAV_TYPE_QUADROTOR;    ///< This system is an quadcopter
+//	mavlink_system.type = MAV_TYPE_QUADROTOR;    ///< This system is an quadcopter
+
 
 }
 
@@ -115,25 +116,25 @@ void thread_mavlink(void *parameters)
 				{
 					mavlink_system.compid = MAV_COMP_ID_ALL;
 					
-					mavlink_msg_battery_status_pack(mavlink_system.sysid,
-											mavlink_system.compid, 
-											&msg,
-											0,
-											(int)(11 *1000),
-											-1,
-											-1,
-											-1, 
-											-1, 
-											-1, 
-											(int)(6 *1000),
-											-1,
-											-1,
-											-1);		
+//					mavlink_msg_battery_status_pack(mavlink_system.sysid,
+//											mavlink_system.compid, 
+//											&msg,
+//											0,
+//											(int)(11 *1000),
+//											-1,
+//											-1,
+//											-1, 
+//											-1, 
+//											-1, 
+//											(int)(6 *1000),
+//											-1,
+//											-1,
+//											-1);		
 
 
-					len = mavlink_msg_to_send_buffer(tx_buf, &msg);
+					//len = mavlink_msg_to_send_buffer(tx_buf, &msg);
 					
-					rt_device_write(dev_uart, 0, tx_buf, len);
+					//rt_device_write(dev_uart, 0, tx_buf, len);
 					rt_mp_free(tx_buf);
 				}
 				//if get no buffer
@@ -155,7 +156,7 @@ void thread_mavlink(void *parameters)
 				mavlink_msg_attitude_pack(mavlink_system.sysid,
 										mavlink_system.compid, 
 										&msg, 
-										rt_tick_get(),
+										rand(),
 										(float)count/180.0,
 										(float)count/90.0,
 										(float)count/360.0,
